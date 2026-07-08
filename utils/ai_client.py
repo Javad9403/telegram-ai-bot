@@ -32,5 +32,13 @@ class AIClient:
                 yield content
 
         except Exception as e:
+            error_msg = str(e).lower()
             logger.error("AI API call failed: %s", e)
-            yield "Sorry, I'm having trouble connecting to the AI. Please try again later."
+            if "insufficient_quota" in error_msg or "rate limit" in error_msg or "429" in error_msg:
+                yield "I've run out of API tokens. Please ask the admin to top up the account."
+            elif "invalid_api_key" in error_msg or "401" in error_msg or "unauthorized" in error_msg:
+                yield "The API key is invalid. Please check the configuration."
+            elif "model_not_found" in error_msg or "not found" in error_msg:
+                yield f"The AI model '{self.model}' was not found. Try a different model."
+            else:
+                yield "Sorry, I'm having trouble connecting to the AI. Please try again later."
