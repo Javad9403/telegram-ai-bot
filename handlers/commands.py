@@ -18,7 +18,10 @@ async def cmd_start(message: Message):
         "/start - Show this message\n"
         "/help - Show help\n"
         "/clear - Clear conversation history\n"
-        "/setmodel &lt;model&gt; - Change AI model (e.g., /setmodel gpt-4o)",
+        "/setmodel <model> - Change AI model (e.g., /setmodel gpt-4o)\n"
+        "/photo <query> - Search photos\n"
+        "/music <query> - Search music\n"
+        "/search <query> - Search the web",
         parse_mode="HTML",
     )
 
@@ -31,7 +34,10 @@ async def cmd_help(message: Message):
         "• <b>Groups</b>: Mention me with @bot_username or reply to one of my messages.\n"
         "• I support Markdown formatting in responses.\n"
         "• Use /clear to reset the conversation.\n"
-        "• Use /setmodel to switch AI models.\n\n"
+        "• Use /setmodel to switch AI models.\n"
+        "• Use /photo <query> to search for photos (Unsplash).\n"
+        "• Use /music <query> to search for music (Deezer, YouTube).\n"
+        "• Use /search <query> to search the web (Serper, Google, Bing, Brave, DuckDuckGo).\n\n"
         "Need more help? Contact the bot administrator.",
         parse_mode="HTML",
     )
