@@ -11,9 +11,6 @@ from aiohttp import web
 from config import config
 from handlers import commands as commands_handler
 from handlers import chat as chat_handler
-from handlers import search as search_handler
-from handlers import photo_search as photo_search_handler
-from handlers import music_search as music_search_handler
 from handlers import web_search as web_search_handler
 from utils.ai_client import AIClient
 from utils.history import HistoryManager
@@ -36,8 +33,6 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher):
             BotCommand(command="help", description="Show help"),
             BotCommand(command="clear", description="Clear conversation history"),
             BotCommand(command="setmodel", description="Change AI model"),
-            BotCommand(command="photo", description="Search photos"),
-            BotCommand(command="music", description="Search music"),
             BotCommand(command="search", description="Search the web"),
         ],
         scope=BotCommandScopeDefault(),
@@ -68,9 +63,6 @@ def create_dispatcher() -> Dispatcher:
 
     dp.include_router(commands_handler.router)
     dp.include_router(chat_handler.router)
-    dp.include_router(search_handler.router)
-    dp.include_router(photo_search_handler.router)
-    dp.include_router(music_search_handler.router)
     dp.include_router(web_search_handler.router)
 
     dp.startup.register(on_startup)

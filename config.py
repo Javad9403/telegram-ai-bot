@@ -21,12 +21,6 @@ class Config:
     admin_ids: list[int] = field(default_factory=lambda: [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()])
     rate_limit: int = int(os.getenv("RATE_LIMIT", "10"))
 
-    # Photo search APIs
-    unsplash_access_key: str = field(default_factory=lambda: os.getenv("UNSPLASH_ACCESS_KEY", ""))
-
-    # Music search APIs
-    youtube_api_key: str = field(default_factory=lambda: os.getenv("YOUTUBE_API_KEY", ""))
-
     # Web search APIs
     google_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_API_KEY", ""))
     google_cx: str = field(default_factory=lambda: os.getenv("GOOGLE_CX", ""))
