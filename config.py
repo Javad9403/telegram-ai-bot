@@ -20,6 +20,9 @@ class Config:
     webhook_port: int = int(os.getenv("WEBHOOK_PORT", "8443"))
     admin_ids: list[int] = field(default_factory=lambda: [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()])
     rate_limit: int = int(os.getenv("RATE_LIMIT", "10"))
+    http_proxy: str = field(default_factory=lambda: os.getenv("HTTP_PROXY", ""))
+    socks5_proxy: str = field(default_factory=lambda: os.getenv("SOCKS5_PROXY", ""))
+    proxy_url: str = field(default_factory=lambda: os.getenv("PROXY_URL", ""))
 
     @property
     def use_webhook_enabled(self) -> bool:
@@ -28,6 +31,16 @@ class Config:
         if not self.webhook_url.startswith("https://"):
             return False
         return True
+
+    @property
+    def proxy_url_resolved(self) -> str | None:
+        if self.proxy_url:
+            return self.proxy_url
+        if self.socks5_proxy:
+            return self.socks5_proxy
+        if self.http_proxy:
+            return self.http_proxy
+        return None
 
 
 config = Config()
