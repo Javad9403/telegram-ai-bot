@@ -21,13 +21,6 @@ class Config:
     admin_ids: list[int] = field(default_factory=lambda: [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()])
     rate_limit: int = int(os.getenv("RATE_LIMIT", "10"))
 
-    # Web search APIs
-    google_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_API_KEY", ""))
-    google_cx: str = field(default_factory=lambda: os.getenv("GOOGLE_CX", ""))
-    bing_api_key: str = field(default_factory=lambda: os.getenv("BING_API_KEY", ""))
-    brave_api_key: str = field(default_factory=lambda: os.getenv("BRAVE_API_KEY", ""))
-    serper_api_key: str = field(default_factory=lambda: os.getenv("SERPER_API_KEY", ""))
-
     @property
     def use_webhook_enabled(self) -> bool:
         if not self.use_webhook:
