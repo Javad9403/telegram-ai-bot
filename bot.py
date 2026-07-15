@@ -62,8 +62,8 @@ def create_dispatcher() -> Dispatcher:
     dp["system_prompt"] = config.system_prompt
 
     dp.include_router(commands_handler.router)
-    dp.include_router(chat_handler.router)
     dp.include_router(web_search_handler.router)
+    dp.include_router(chat_handler.router)
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
