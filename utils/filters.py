@@ -38,3 +38,13 @@ class ReplyToBotFilter(Filter):
         if message.reply_to_message and message.reply_to_message.from_user:
             return message.reply_to_message.from_user.id == self.bot_id
         return False
+
+
+class BotNameFilter(Filter):
+    def __init__(self, bot_name: str):
+        self.bot_name = bot_name.lower()
+
+    async def __call__(self, message: Message) -> bool:
+        if not message.text:
+            return False
+        return self.bot_name in message.text.lower()

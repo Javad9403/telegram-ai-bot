@@ -26,6 +26,7 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher):
     bot_user = await bot.get_me()
     dispatcher["bot_username"] = bot_user.username
     dispatcher["bot_id"] = bot_user.id
+    dispatcher["bot_name"] = bot_user.first_name.lower()
 
     await bot.set_my_commands(
         [

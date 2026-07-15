@@ -6,7 +6,7 @@ from aiogram.enums import ChatType, ChatAction
 from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
 
-from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter
+from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -55,14 +55,17 @@ async def handle_group_message(
     bot_username: str,
     system_prompt: str,
     bot_id: int,
+    bot_name: str,
 ):
     mention_filter = MentionFilter(bot_username)
     reply_filter = ReplyToBotFilter(bot_id)
+    name_filter = BotNameFilter(bot_name)
 
     is_mention = await mention_filter(message)
     is_reply = await reply_filter(message)
+    is_name = await name_filter(message)
 
-    if not is_mention and not is_reply:
+    if not is_mention and not is_reply and not is_name:
         return
 
     await _process_message(message, ai_client, history_manager, bot_username, system_prompt, clean_mention=True)
