@@ -18,10 +18,12 @@ class TavilyClient:
             headers={"Content-Type": "application/json"},
         )
 
-    async def search(self, query: str, num_results: int = 10) -> list[dict]:
+    async def search(self, query: str, num_results: int = 2, deep: bool = False) -> list[dict]:
         if not self.api_key:
             logger.warning("Tavily API key not configured")
             return [{"title": "Search unavailable", "snippet": "Tavily API key not configured. Please add TAVILY_API_KEY to .env", "link": ""}]
+
+        max_results = 8 if deep else num_results
 
         try:
             response = await self.client.post(
@@ -29,7 +31,7 @@ class TavilyClient:
                 json={
                     "api_key": self.api_key,
                     "query": query,
-                    "max_results": num_results,
+                    "max_results": max_results,
                     "search_depth": "basic",
                     "include_answer": False,
                     "include_raw_content": False,

@@ -12,13 +12,18 @@ WEB_SEARCH_TOOL = {
     "type": "function",
     "function": {
         "name": "web_search",
-        "description": "Search the web for current information, news, facts, or answers to questions that require up-to-date knowledge. Use this when the user asks about recent events, current prices, weather, news, technical documentation, or any topic requiring live information.",
+        "description": "Search the web for current information, news, facts, or answers to questions that require up-to-date knowledge. Use this when the user asks about recent events, current prices, weather, news, technical documentation, or any topic requiring live information. Set deep=true if user wants comprehensive results or explicitly asks for more sources.",
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
                     "description": "The search query to use. Be specific and include relevant keywords.",
+                },
+                "deep": {
+                    "type": "boolean",
+                    "description": "Set to true if user wants comprehensive results or explicitly asks for more sources/details. Default is false (returns 2 concise results).",
+                    "default": False,
                 },
             },
             "required": ["query"],
@@ -99,9 +104,10 @@ class AIClient:
                 try:
                     args = json.loads(tool_call["function"]["arguments"])
                     query = args.get("query", "")
+                    deep = args.get("deep", False)
                     if query:
-                        logger.info(f"AI requested web search: {query}")
-                        results = await search_client.search(query, num_results=8)
+                        logger.info(f"AI requested web search: {query} (deep={deep})")
+                        results = await search_client.search(query, num_results=8, deep=deep)
                         results_text = self._format_search_results(results)
                         messages.append({
                             "role": "tool",

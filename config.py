@@ -12,7 +12,7 @@ class Config:
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     ai_model: str = field(default_factory=lambda: os.getenv("AI_MODEL", "gpt-4o"))
     system_prompt: str = field(
-        default_factory=lambda: os.getenv("SYSTEM_PROMPT", "You are a helpful Telegram assistant. Respond concisely and accurately. You can search the web when needed to provide accurate, up-to-date information.")
+        default_factory=lambda: os.getenv("SYSTEM_PROMPT", "You are a helpful Telegram assistant. Respond concisely and accurately in the user's language. When you need current information, search the web. After searching, give a clear natural summary answer with only 1-2 most relevant sources cited. If user wants more details or full results, they can say 'more results' or 'show more' and you should search again with deep=true.")
     )
     redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379/0"))
     use_webhook: bool = field(default_factory=lambda: os.getenv("USE_WEBHOOK", "false").lower() in ("true", "1", "yes"))
