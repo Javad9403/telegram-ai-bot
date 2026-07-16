@@ -6,7 +6,7 @@ from aiogram.enums import ChatType, ChatAction
 from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
 
-from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter
+from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -60,15 +60,29 @@ async def handle_group_message(
     mention_filter = MentionFilter(bot_username)
     reply_filter = ReplyToBotFilter(bot_id)
     name_filter = BotNameFilter(bot_name)
+    persian_name_filter = PersianNameFilter()
 
     is_mention = await mention_filter(message)
     is_reply = await reply_filter(message)
     is_name = await name_filter(message)
+    is_persian_name = await persian_name_filter(message)
 
-    if not is_mention and not is_reply and not is_name:
+    if not is_mention and not is_reply and not is_name and not is_persian_name:
         return
 
-    await _process_message(message, ai_client, history_manager, bot_username, system_prompt, clean_mention=True)
+    # Clean up the message based on what triggered it
+    clean_mention = is_mention or is_name
+    clean_persian = is_persian_name
+
+    await _process_message(
+        message,
+        ai_client,
+        history_manager,
+        bot_username,
+        system_prompt,
+        clean_mention=clean_mention,
+        clean_persian=clean_persian,
+    )
 
 
 async def _process_message(
@@ -78,11 +92,17 @@ async def _process_message(
     bot_username: str,
     system_prompt: str,
     clean_mention: bool = False,
+    clean_persian: bool = False,
 ):
     text = message.text
 
     if clean_mention:
         text = _clean_mention(text, bot_username)
+        if not text:
+            text = "Hello"
+
+    if clean_persian:
+        text = clean_persian_name(text)
         if not text:
             text = "Hello"
 
