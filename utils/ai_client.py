@@ -107,7 +107,7 @@ class AIClient:
                     deep = args.get("deep", False)
                     if query:
                         logger.info(f"AI requested web search: {query} (deep={deep})")
-                        results = await search_client.search(query, num_results=8, deep=deep)
+                        results = await search_client.search(query, deep=deep)
                         results_text = self._format_search_results(results)
                         messages.append({
                             "role": "tool",
