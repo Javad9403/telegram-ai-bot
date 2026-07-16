@@ -19,7 +19,7 @@ async def cmd_start(message: Message):
         "/help - Show help\n"
         "/clear - Clear conversation history\n"
         "/setmodel <model> - Change AI model (e.g., /setmodel gpt-4o)\n"
-        "/search <query> - Search the web",
+        "/search <query> - Search the web (Tavily)",
         parse_mode="HTML",
     )
 
@@ -33,13 +33,13 @@ async def cmd_help(message: Message):
         "• I support Markdown formatting in responses.\n"
         "• Use /clear to reset the conversation.\n"
         "• Use /setmodel to switch AI models.\n"
-        "• Use /search <query> to search the web (DuckDuckGo).\n\n"
+        "• Use /search <query> to search the web (Tavily).\n\n"
         "Need more help? Contact the bot administrator.",
         parse_mode="HTML",
     )
 
 
-@router.message(Command("clear"))
+@router.message(Command("clear", "clearhistory"))
 async def cmd_clear(message: Message, history_manager, bot_username: str):
     await history_manager.clear(message.chat.id)
     logger.info("History cleared for chat %s", message.chat.id)

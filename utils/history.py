@@ -2,6 +2,8 @@ import json
 import logging
 from collections import defaultdict
 
+from config import config
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -16,12 +18,11 @@ try:
 except ImportError:
     HAS_SQLITE = False
 
-MAX_HISTORY_TURNS = 20
-
 
 class HistoryManager:
-    def __init__(self, redis_url: str):
+    def __init__(self, redis_url: str, ai_client=None):
         self.redis_url = redis_url
+        self.ai_client = ai_client
         self.backend = None
         self.redis = None
         self.sqlite_conn = None
@@ -55,8 +56,9 @@ class HistoryManager:
         logger.info("History backend: In-memory dict")
 
     def _trim(self, messages: list[dict]) -> list[dict]:
-        if len(messages) > MAX_HISTORY_TURNS * 2:
-            return messages[-(MAX_HISTORY_TURNS * 2):]
+        max_msgs = config.max_history_turns * 2
+        if len(messages) > max_msgs:
+            return messages[-max_msgs:]
         return messages
 
     async def add_message(self, chat_id: int, role: str, content: str):
@@ -66,7 +68,8 @@ class HistoryManager:
             key = f"history:{chat_id}"
             entry = json.dumps({"role": role, "content": content})
             await self.redis.rpush(key, entry)
-            await self.redis.ltrim(key, -(MAX_HISTORY_TURNS * 2), -1)
+            max_msgs = config.max_history_turns * 2
+            await self.redis.ltrim(key, -max_msgs, -1)
 
         elif self.backend == "sqlite" and self.sqlite_conn:
             cursor = await self.sqlite_conn.execute(
@@ -88,16 +91,17 @@ class HistoryManager:
     async def _trim_sqlite(self, chat_id: int):
         if not self.sqlite_conn:
             return
+        max_msgs = config.max_history_turns * 2
         cursor = await self.sqlite_conn.execute(
             "SELECT COUNT(*) FROM history WHERE chat_id = ?", (chat_id,)
         )
         row = await cursor.fetchone()
-        if row and row[0] > MAX_HISTORY_TURNS * 2:
+        if row and row[0] > max_msgs:
             await self.sqlite_conn.execute(
                 "DELETE FROM history WHERE chat_id = ? AND idx <= ("
                 "SELECT idx FROM history WHERE chat_id = ? ORDER BY idx ASC LIMIT 1 OFFSET ?"
                 ")",
-                (chat_id, chat_id, row[0] - MAX_HISTORY_TURNS * 2),
+                (chat_id, chat_id, row[0] - max_msgs),
             )
             await self.sqlite_conn.commit()
 

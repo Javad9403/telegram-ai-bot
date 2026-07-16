@@ -56,7 +56,7 @@ def create_dispatcher() -> Dispatcher:
         api_key=config.openai_api_key,
         model=config.ai_model,
     )
-    history_manager = HistoryManager(redis_url=config.redis_url)
+    history_manager = HistoryManager(redis_url=config.redis_url, ai_client=ai_client)
 
     dp["ai_client"] = ai_client
     dp["history_manager"] = history_manager
