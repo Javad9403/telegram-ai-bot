@@ -4,3 +4,4 @@ python-dotenv>=1.0
 redis>=5.0
 aiosqlite>=0.20
 aiohttp>=3.9
+tavily-python>=0.3.0

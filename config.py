@@ -12,7 +12,7 @@ class Config:
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     ai_model: str = field(default_factory=lambda: os.getenv("AI_MODEL", "gpt-4o"))
     system_prompt: str = field(
-        default_factory=lambda: os.getenv("SYSTEM_PROMPT", "You are a helpful Telegram assistant. Respond concisely and accurately.")
+        default_factory=lambda: os.getenv("SYSTEM_PROMPT", "You are a helpful Telegram assistant. Respond concisely and accurately. You can search the web when needed to provide accurate, up-to-date information.")
     )
     redis_url: str = field(default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379/0"))
     use_webhook: bool = field(default_factory=lambda: os.getenv("USE_WEBHOOK", "false").lower() in ("true", "1", "yes"))
@@ -23,6 +23,7 @@ class Config:
     http_proxy: str = field(default_factory=lambda: os.getenv("HTTP_PROXY", ""))
     socks5_proxy: str = field(default_factory=lambda: os.getenv("SOCKS5_PROXY", ""))
     proxy_url: str = field(default_factory=lambda: os.getenv("PROXY_URL", ""))
+    tavily_api_key: str = field(default_factory=lambda: os.getenv("TAVILY_API_KEY", ""))
 
     @property
     def use_webhook_enabled(self) -> bool:

@@ -4,14 +4,10 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-from utils.web_search_client import DuckDuckGoClient
+from utils.web_search_client import get_search_client
 
 router = Router()
 logger = logging.getLogger(__name__)
-
-
-def get_search_client():
-    return DuckDuckGoClient()
 
 
 @router.message(Command("search", "web", "web_search"))
@@ -45,20 +41,6 @@ async def cmd_web_search(message: Message):
         await message.answer("No results found. Try a different search query.")
         return
 
-    # Check for CAPTCHA/blocked result
-    if len(results) == 1 and results[0].get("title") == "Search blocked":
-        await message.answer(
-            "🔒 <b>Search temporarily unavailable</b>\n\n"
-            "DuckDuckGo is blocking automated requests from this IP.\n"
-            "This is common on cloud hosting platforms like Railway.\n\n"
-            "You can:\n"
-            "• Try a different search query\n"
-            "• Use a different search engine manually\n"
-            "• Configure a proxy in bot settings (if available)",
-            parse_mode="HTML",
-        )
-        return
-
     seen_urls = set()
     unique_results = []
     for result in results:
@@ -75,7 +57,7 @@ async def cmd_web_search(message: Message):
         caption = (
             f"🔍 <b>{title}</b>\n"
             f"{snippet}\n"
-            f"🌐 Source: DuckDuckGo"
+            f"🌐 Source: Tavily"
         )
 
         if link:
