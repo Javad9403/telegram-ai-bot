@@ -63,7 +63,8 @@ class AIClient:
                                     tool_calls[tc.index]["function"]["arguments"] += tc.function.arguments
 
                 if tool_calls:
-                    yield from await self._handle_tool_calls(messages, full_content, tool_calls, stream)
+                    async for chunk in self._handle_tool_calls(messages, full_content, tool_calls, stream):
+                        yield chunk
             else:
                 content = response.choices[0].message.content or ""
                 tool_calls = response.choices[0].message.tool_calls or []
@@ -72,7 +73,8 @@ class AIClient:
                         {"id": tc.id, "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
                         for tc in tool_calls
                     ]
-                    yield from await self._handle_tool_calls(messages, content, tool_calls, stream)
+                    async for chunk in self._handle_tool_calls(messages, content, tool_calls, stream):
+                        yield chunk
                 else:
                     yield content
 
