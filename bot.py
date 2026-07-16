@@ -12,6 +12,7 @@ from config import config
 from handlers import commands as commands_handler
 from handlers import chat as chat_handler
 from handlers import web_search as web_search_handler
+from handlers import image as image_handler
 from utils.ai_client import AIClient
 from utils.history import HistoryManager
 
@@ -55,6 +56,9 @@ def create_dispatcher() -> Dispatcher:
         base_url=config.openai_base_url,
         api_key=config.openai_api_key,
         model=config.ai_model,
+        vision_base_url=config.vision_base_url,
+        vision_api_key=config.vision_api_key,
+        vision_model=config.vision_model,
     )
     history_manager = HistoryManager(redis_url=config.redis_url, ai_client=ai_client)
 
@@ -65,6 +69,7 @@ def create_dispatcher() -> Dispatcher:
     dp.include_router(commands_handler.router)
     dp.include_router(web_search_handler.router)
     dp.include_router(chat_handler.router)
+    dp.include_router(image_handler.router)
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)

@@ -25,6 +25,9 @@ class Config:
     proxy_url: str = field(default_factory=lambda: os.getenv("PROXY_URL", ""))
     tavily_api_key: str = field(default_factory=lambda: os.getenv("TAVILY_API_KEY", ""))
     max_history_turns: int = int(os.getenv("MAX_HISTORY_TURNS", "20"))
+    vision_model: str = field(default_factory=lambda: os.getenv("VISION_MODEL", "minimax-m3"))
+    vision_base_url: str = field(default_factory=lambda: os.getenv("VISION_BASE_URL", "https://integrate.api.nvidia.com/v1"))
+    vision_api_key: str = field(default_factory=lambda: os.getenv("VISION_API_KEY", ""))
 
     @property
     def use_webhook_enabled(self) -> bool:

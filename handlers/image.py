@@ -1,0 +1,214 @@
+import logging
+import base64
+from io import BytesIO
+
+from aiogram import Router, F
+from aiogram.enums import ChatType, ChatAction
+from aiogram.types import Message
+from aiogram.utils.chat_action import ChatActionSender
+from aiogram.filters import Filter
+
+from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name
+
+router = Router()
+logger = logging.getLogger(__name__)
+
+
+VISION_PROMPT = (
+    "You are a helpful AI assistant with vision capabilities. "
+    "Analyze the image and answer the user's question or provide a detailed description. "
+    "Respond in the user's language (Persian if they write in Persian, otherwise English). "
+    "Be concise but thorough in your analysis."
+)
+
+VISION_PROMPT_WITH_CAPTION = (
+    "You are a helpful AI assistant with vision capabilities. "
+    "The user sent an image with the following caption/question: '{caption}'. "
+    "Analyze the image and answer their question or provide a detailed description. "
+    "Respond in the user's language (Persian if they write in Persian, otherwise English). "
+    "Be concise but thorough in your analysis."
+)
+
+
+async def _get_image_bytes(message: Message, bot) -> bytes | None:
+    """Extract image bytes from a message."""
+    if message.photo:
+        photo = message.photo[-1]
+        file = await bot.get_file(photo.file_id)
+        file_bytes = await bot.download_file(file.file_path)
+        return file_bytes.read()
+    return None
+
+
+async def _get_image_bytes_from_file_id(file_id: str, bot) -> bytes | None:
+    """Extract image bytes from a file_id."""
+    try:
+        file = await bot.get_file(file_id)
+        file_bytes = await bot.download_file(file.file_path)
+        return file_bytes.read()
+    except Exception as e:
+        logger.error("Failed to download file: %s", e)
+        return None
+
+
+def _encode_image(image_bytes: bytes) -> str:
+    """Encode image bytes to base64."""
+    return base64.b64encode(image_bytes).decode("utf-8")
+
+
+async def _process_image_message(
+    message: Message,
+    ai_client,
+    history_manager,
+    bot_username: str,
+    system_prompt: str,
+    caption: str | None = None,
+    is_reply: bool = False,
+):
+    """Process an image message with optional caption."""
+    bot = message.bot
+    
+    async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
+        try:
+            image_bytes = await _get_image_bytes(message, bot)
+            if not image_bytes:
+                await message.answer("Could not download the image. Please try again.")
+                return
+
+            base64_image = _encode_image(image_bytes)
+            
+            prompt_text = caption or "What is in this image? Please describe it in detail."
+            
+            if caption:
+                system_content = VISION_PROMPT_WITH_CAPTION.format(caption=caption)
+            else:
+                system_content = VISION_PROMPT
+            
+            messages = [
+                {"role": "system", "content": system_prompt + "\n\n" + system_content},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt_text},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                    ]
+                }
+            ]
+
+            await message.answer("در حال بررسی عکس...")
+
+            full_response = ""
+            async for partial in ai_client.get_response(messages, stream=True):
+                full_response = partial
+
+            if not full_response:
+                full_response = "I couldn't analyze the image. Please try again."
+
+            if caption:
+                await history_manager.add_message(message.chat.id, "user", f"[Image] {caption}")
+            else:
+                await history_manager.add_message(message.chat.id, "user", "[Image]")
+            await history_manager.add_message(message.chat.id, "assistant", full_response)
+
+            for part in _split_long_message(full_response):
+                await message.answer(part, parse_mode="Markdown")
+
+        except Exception as e:
+            logger.error("Error processing image in chat %s: %s", message.chat.id, e, exc_info=True)
+            await message.answer("Sorry, something went wrong while processing the image.")
+
+
+def _split_long_message(text: str, max_length: int = 4096) -> list[str]:
+    if len(text) <= max_length:
+        return [text]
+
+    parts = []
+    while text:
+        if len(text) <= max_length:
+            parts.append(text)
+            break
+        split_at = text.rfind("\n", 0, max_length)
+        if split_at == -1:
+            split_at = text.rfind(" ", 0, max_length)
+        if split_at == -1:
+            split_at = max_length
+        parts.append(text[:split_at])
+        text = text[split_at:].strip()
+    return parts
+
+
+class ImageFilter(Filter):
+    """Filter for detecting images sent to the bot."""
+    
+    def __init__(self, bot_id: int, bot_username: str, bot_name: str):
+        self.bot_id = bot_id
+        self.bot_username = bot_username.lower()
+        self.bot_name = bot_name.lower()
+        self.persian_name = "جاوید"
+
+    async def __call__(self, message: Message) -> bool:
+        if not message.photo:
+            return False
+
+        if message.chat.type == ChatType.PRIVATE:
+            return True
+
+        if message.caption:
+            caption_lower = message.caption.lower()
+            if f"@{self.bot_username}" in caption_lower:
+                return True
+            if self.bot_name in caption_lower:
+                return True
+            if caption_lower.strip().startswith(self.persian_name):
+                return True
+
+        if message.reply_to_message and message.reply_to_message.from_user:
+            if message.reply_to_message.from_user.id == self.bot_id:
+                return True
+
+        return False
+
+
+@router.message(
+    ChatTypeFilter([ChatType.PRIVATE]),
+    F.photo,
+)
+async def handle_private_image(message: Message, ai_client, history_manager, bot_username: str, system_prompt: str):
+    await _process_image_message(message, ai_client, history_manager, bot_username, system_prompt, caption=message.caption)
+
+
+@router.message(
+    ChatTypeFilter([ChatType.GROUP, ChatType.SUPERGROUP]),
+    F.photo,
+)
+async def handle_group_image(
+    message: Message,
+    ai_client,
+    history_manager,
+    bot_username: str,
+    system_prompt: str,
+    bot_id: int,
+    bot_name: str,
+):
+    image_filter = ImageFilter(bot_id, bot_username, bot_name)
+    if not await image_filter(message):
+        return
+
+    caption = message.caption
+    is_reply = message.reply_to_message and message.reply_to_message.from_user and message.reply_to_message.from_user.id == bot_id
+
+    if caption:
+        caption_lower = caption.lower()
+        if f"@{bot_username.lower()}" in caption_lower:
+            caption = caption.replace(f"@{bot_username}", "").strip()
+        elif bot_name.lower() in caption_lower:
+            caption = caption.replace(bot_name, "").strip()
+        elif caption.strip().lower().startswith("جاوید"):
+            caption = caption.strip()[len("جاوید"):].strip()
+            if caption and caption[0] in "،.?!؛،":
+                caption = caption[1:].strip()
+
+    await _process_image_message(
+        message, ai_client, history_manager, bot_username, system_prompt,
+        caption=caption if caption else None, is_reply=is_reply
+    )

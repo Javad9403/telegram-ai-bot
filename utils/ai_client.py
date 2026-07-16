@@ -1,5 +1,6 @@
 import logging
 import json
+import base64
 
 import httpx
 from openai import AsyncOpenAI
@@ -33,19 +34,43 @@ WEB_SEARCH_TOOL = {
 
 
 class AIClient:
-    def __init__(self, base_url: str, api_key: str, model: str):
+    def __init__(self, base_url: str, api_key: str, model: str, vision_base_url: str = "", vision_api_key: str = "", vision_model: str = ""):
         http_client = httpx.AsyncClient(trust_env=False)
         self.client = AsyncOpenAI(base_url=base_url, api_key=api_key, http_client=http_client)
         self.model = model
+        
+        self.vision_client = None
+        if vision_base_url and vision_api_key and vision_model:
+            vision_http_client = httpx.AsyncClient(trust_env=False)
+            self.vision_client = AsyncOpenAI(base_url=vision_base_url, api_key=vision_api_key, http_client=vision_http_client)
+            self.vision_model = vision_model
+        else:
+            self.vision_model = model
+            self.vision_client = self.client
 
     async def get_response(self, messages: list[dict], stream: bool = True) -> str:
+        # Check if any message contains images (vision request)
+        use_vision = False
+        for msg in messages:
+            content = msg.get("content", "")
+            if isinstance(content, list):
+                for item in content:
+                    if isinstance(item, dict) and item.get("type") == "image_url":
+                        use_vision = True
+                        break
+            if use_vision:
+                break
+
+        client = self.vision_client if use_vision else self.client
+        model = self.vision_model if use_vision else self.model
+
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
+            response = await client.chat.completions.create(
+                model=model,
                 messages=messages,
                 stream=stream,
-                tools=[WEB_SEARCH_TOOL],
-                tool_choice="auto",
+                tools=[WEB_SEARCH_TOOL] if not use_vision else None,
+                tool_choice="auto" if not use_vision else None,
             )
 
             if stream:
@@ -94,6 +119,58 @@ class AIClient:
                 yield f"The AI model '{self.model}' was not found. Try a different model."
             else:
                 yield "Sorry, I'm having trouble connecting to the AI. Please try again later."
+
+    async def analyze_image(self, image_data: bytes, prompt: str = "Describe this image in detail.", stream: bool = True) -> str:
+        if not self.vision_client or not self.vision_model:
+            yield "Vision model is not configured. Please configure VISION_MODEL, VISION_BASE_URL, and VISION_API_KEY."
+            return
+
+        try:
+            base64_image = base64.b64encode(image_data).decode("utf-8")
+            
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                    ]
+                }
+            ]
+
+            response = await self.vision_client.chat.completions.create(
+                model=self.vision_model,
+                messages=messages,
+                stream=stream,
+                max_tokens=1024,
+            )
+
+            if stream:
+                full_content = ""
+                async for chunk in response:
+                    delta = chunk.choices[0].delta if chunk.choices else None
+                    if delta and delta.content:
+                        full_content += delta.content
+                        yield full_content
+            else:
+                yield response.choices[0].message.content or ""
+
+        except Exception as e:
+            error_msg = str(e).lower()
+            logger.error("Vision API call failed: %s", e)
+            if "insufficient_quota" in error_msg or "rate limit" in error_msg or "429" in error_msg:
+                yield "Vision API quota exceeded. Please ask the admin to top up the account."
+            elif "invalid_api_key" in error_msg or "401" in error_msg or "unauthorized" in error_msg:
+                yield "The Vision API key is invalid. Please check the configuration."
+            elif "model_not_found" in error_msg or "not found" in error_msg:
+                yield f"The vision model '{self.vision_model}' was not found. Try a different model."
+            else:
+                yield "Sorry, I'm having trouble analyzing the image. Please try again later."
 
     async def _handle_tool_calls(self, messages: list[dict], content: str, tool_calls: list, stream: bool):
         search_client = get_search_client()
