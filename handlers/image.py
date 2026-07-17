@@ -4,7 +4,7 @@ import re
 
 from aiogram import Router, F
 from aiogram.enums import ChatType, ChatAction
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.utils.chat_action import ChatActionSender
 from aiogram.filters import Filter
 
