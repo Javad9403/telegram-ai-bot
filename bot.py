@@ -36,6 +36,8 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher):
             BotCommand(command="clear", description="Clear conversation history"),
             BotCommand(command="setmodel", description="Change AI model"),
             BotCommand(command="search", description="Search the web"),
+            BotCommand(command="owner", description="Show owner information"),
+            BotCommand(command="me", description="Show your user info"),
         ],
         scope=BotCommandScopeDefault(),
     )
@@ -65,6 +67,9 @@ def create_dispatcher() -> Dispatcher:
     dp["ai_client"] = ai_client
     dp["history_manager"] = history_manager
     dp["system_prompt"] = config.system_prompt
+    dp["owner_id"] = config.owner_id
+    dp["owner_name"] = config.owner_name
+    dp["owner_roles"] = config.owner_roles
 
     dp.include_router(commands_handler.router)
     dp.include_router(web_search_handler.router)

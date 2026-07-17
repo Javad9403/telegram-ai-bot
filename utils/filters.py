@@ -74,3 +74,11 @@ def clean_persian_name(text: str) -> str:
     if text.lower().startswith("جاوید"):
         text = text[len("جاوید"):].strip()
     return text
+
+
+class OwnerFilter(Filter):
+    def __init__(self, owner_id: int):
+        self.owner_id = owner_id
+
+    async def __call__(self, message: Message) -> bool:
+        return message.from_user and message.from_user.id == self.owner_id

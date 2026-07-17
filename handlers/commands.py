@@ -4,6 +4,8 @@ from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
+from config import config
+
 router = Router()
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,9 @@ async def cmd_start(message: Message):
         "/help - Show help\n"
         "/clear - Clear conversation history\n"
         "/setmodel <model> - Change AI model (e.g., /setmodel gpt-4o)\n"
-        "/search <query> - Search the web (Tavily)",
+        "/search <query> - Search the web (Tavily)\n"
+        "/owner - Show owner information\n"
+        "/me - Show your user info",
         parse_mode="HTML",
     )
 
@@ -33,7 +37,9 @@ async def cmd_help(message: Message):
         "• I support Markdown formatting in responses.\n"
         "• Use /clear to reset the conversation.\n"
         "• Use /setmodel to switch AI models.\n"
-        "• Use /search <query> to search the web (Tavily).\n\n"
+        "• Use /search <query> to search the web (Tavily).\n"
+        "• Use /owner to see owner info.\n"
+        "• Use /me to see your user info.\n\n"
         "Need more help? Contact the bot administrator.",
         parse_mode="HTML",
     )
@@ -56,3 +62,45 @@ async def cmd_setmodel(message: Message, ai_client):
     ai_client.model = model_name
     logger.info("Model changed to %s by user %s in chat %s", model_name, message.from_user.id, message.chat.id)
     await message.answer(f"AI model changed to <b>{model_name}</b>.", parse_mode="HTML")
+
+
+@router.message(Command("owner"))
+async def cmd_owner(message: Message):
+    is_owner = message.from_user and message.from_user.id == config.owner_id
+    if is_owner:
+        await message.answer(
+            f"👑 <b>Owner Information</b>\n\n"
+            f"Name: {config.owner_name}\n"
+            f"User ID: {config.owner_id}\n"
+            f"Role: Creator & Developer\n\n"
+            f"Hello, {config.owner_name}! You are the owner of this bot.",
+            parse_mode="HTML",
+        )
+    else:
+        await message.answer(
+            f"👑 <b>Owner Information</b>\n\n"
+            f"Name: {config.owner_name}\n"
+            f"User ID: {config.owner_id}\n"
+            f"Role: Creator & Developer",
+            parse_mode="HTML",
+        )
+
+
+@router.message(Command("me"))
+async def cmd_me(message: Message):
+    user = message.from_user
+    is_owner = user and user.id == config.owner_id
+    roles = []
+    if is_owner:
+        roles.append("👑 Owner (Creator & Developer)")
+    
+    await message.answer(
+        f"👤 <b>Your Information</b>\n\n"
+        f"Name: {user.first_name or 'N/A'} {user.last_name or ''}\n"
+        f"Username: @{user.username or 'N/A'}\n"
+        f"User ID: {user.id}\n"
+        f"Language: {user.language_code or 'N/A'}\n"
+        f"Is Premium: {user.is_premium}\n"
+        f"Roles: {', '.join(roles) if roles else 'User'}",
+        parse_mode="HTML",
+    )

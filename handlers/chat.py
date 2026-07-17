@@ -6,7 +6,8 @@ from aiogram.enums import ChatType, ChatAction
 from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
 
-from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name
+from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name, OwnerFilter
+from config import config
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -40,7 +41,14 @@ def _split_long_message(text: str, max_length: int = 4096) -> list[str]:
     ChatTypeFilter([ChatType.PRIVATE]),
     F.text,
 )
-async def handle_private_message(message: Message, ai_client, history_manager, bot_username: str, system_prompt: str):
+async def handle_private_message(message: Message, ai_client, history_manager, bot_username: str, system_prompt: str, owner_id: int, owner_name: str, owner_roles: list[str]):
+    owner_filter = OwnerFilter(owner_id)
+    is_owner = await owner_filter(message)
+    
+    if is_owner:
+        owner_context = f"\n\n[Note: The user is the bot owner '{owner_name}' ({', '.join(owner_roles)}). Acknowledge this role appropriately.]"
+        system_prompt = system_prompt + owner_context
+
     await _process_message(message, ai_client, history_manager, bot_username, system_prompt)
 
 
@@ -56,16 +64,21 @@ async def handle_group_message(
     system_prompt: str,
     bot_id: int,
     bot_name: str,
+    owner_id: int,
+    owner_name: str,
+    owner_roles: list[str],
 ):
     mention_filter = MentionFilter(bot_username)
     reply_filter = ReplyToBotFilter(bot_id)
     name_filter = BotNameFilter(bot_name)
     persian_name_filter = PersianNameFilter()
+    owner_filter = OwnerFilter(owner_id)
 
     is_mention = await mention_filter(message)
     is_reply = await reply_filter(message)
     is_name = await name_filter(message)
     is_persian_name = await persian_name_filter(message)
+    is_owner = await owner_filter(message)
 
     if not is_mention and not is_reply and not is_name and not is_persian_name:
         return
@@ -73,6 +86,11 @@ async def handle_group_message(
     # Clean up the message based on what triggered it
     clean_mention = is_mention or is_name
     clean_persian = is_persian_name
+
+    # Add owner context to system prompt if user is owner
+    if is_owner:
+        owner_context = f"\n\n[Note: The user is the bot owner '{owner_name}' ({', '.join(owner_roles)}). Acknowledge this role appropriately.]"
+        system_prompt = system_prompt + owner_context
 
     await _process_message(
         message,
