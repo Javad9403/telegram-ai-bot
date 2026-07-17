@@ -2,13 +2,13 @@ import logging
 
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import config
 from handlers.keyboards import (
     get_main_menu_keyboard, get_settings_keyboard, get_help_keyboard,
-    get_model_selection_keyboard, get_chat_followup_keyboard
+    get_model_selection_keyboard, get_chat_followup_keyboard, get_model_keyboard
 )
 
 router = Router()
@@ -18,35 +18,50 @@ logger = logging.getLogger(__name__)
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     is_owner = message.from_user and message.from_user.id == config.owner_id
-    welcome_text = (
-        "👋 <b>Hey there! I'm جاوید — your AI sidekick.</b>\n\n"
-        "I chat in private, hang out in groups, and actually remember our conversation.\n"
-        "In groups, just @mention me or reply to my messages.\n\n"
-        "<b>Quick commands:</b>\n"
-        "• /start — This friendly intro\n"
-        "• /help — Tips & tricks\n"
-        "• /clear — Fresh slate (forget our chat)\n"
-        "• /setmodel <model> — Swap AI brain (e.g., <code>gpt-4o</code>)\n"
-        "• /search <query> — Web search via Tavily\n"
-        "• /owner — Meet my creator\n"
-        "• /me — Your profile card\n\n"
-        "Ready when you are! 🚀"
-    )
+    user_name = message.from_user.first_name or "رفیق"
+    
+    if is_owner:
+        welcome_text = (
+            f"👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
+            f"من جاوید هستم، همشیرِ کد تو. هر چی خواستی بپرس، کد بنویس، تحلیل کن، یا فقط باهام گپ بزن.\n\n"
+            f"<b>🎯 دستورات مخصوص تو:</b>\n"
+            f"• /model — عوض کردن مدل AI با کیبورد شیک\n"
+            f"• /clear — ریست حافظه\n"
+            f"• /owner — اطلاعات خالق (همون تو!)\n"
+            f"• /me — پروفایل تو\n"
+            f"• /help — راهنمای کامل\n\n"
+            f"دستور بده، بی‌زحمت! 🚀"
+        )
+    else:
+        welcome_text = (
+            f"🌟 <b>سلام {user_name}! من جاوید هستم — رفیق هوش‌مصنوعی‌ت.</b>\n\n"
+            f"💬 در چت خصوصی باهام حرف بزن، در گروه‌ها منشن کن یا ریپلای بده.\n"
+            f"🧠 مکالمه‌هامو یادم میره: کد نویسی، ترجمه، تحلیل، خلاقیت و...\n\n"
+            f"<b>🎯 دستورات سریع:</b>\n"
+            f"• /model — تغییر مدل AI با دکمه‌های شیک\n"
+            f"• /clear — پاک کردن حافظه چت\n"
+            f"• /search <جستجو> — سرچ وب با Tavily\n"
+            f"• /owner — خالق من رو ببین\n"
+            f"• /me — پروفایل خودت\n"
+            f"• /help — راهنمای کامل\n\n"
+            f"چه کاری از دست من برمیاد؟ 😊"
+        )
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
 
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
     await message.answer(
-        "<b>📖 How to جاوید</b>\n\n"
-        "• <b>Private chat:</b> Just talk. I'll reply.\n"
-        "• <b>Groups:</b> @mention me or reply to my message.\n"
-        "• <b>Markdown:</b> I speak **bold**, *italic*, `code`, and more.\n"
-        "• <b>/clear</b> — Wipe my memory of this chat.\n"
-        "• <b>/setmodel</b> — Try different AI models.\n"
-        "• <b>/search</b> — Need fresh info? I'll browse the web.\n"
-        "• <b>/owner</b> / <b>/me</b> — Fun little info cards.\n\n"
-        "Stuck? Ping my developer — he's pretty cool. 😉",
+        "<b>📖 راهنمای جاوید</b>\n\n"
+        "• <b>چت خصوصی:</b> مستقیم باهام حرف بزن، جواب می‌دم.\n"
+        "• <b>گروه‌ها:</b> منشن کن (@username) یا به پیام‌ام ریپلای بده.\n"
+        "• <b>فرمت‌دهی:</b> **پرش**, *کج*, `کد`, لیست‌ها و... رو می‌فهمم.\n"
+        "• <b>حافظه:</b> /clear برای ریست کردن گفتگو.\n"
+        "• <b>مدل‌ها:</b> /model برای انتخاب مدل AI (GLM-5.2، Nemotron، GPT-4o، Claude...).\n"
+        "• <b>جستجو:</b> /search یا بپرس \"آخرین قیمت بیت‌کوین چقدره؟\" — خودم سرچ می‌کنم.\n"
+        "• <b>عکس:</b> عکس بفرست، توضیح می‌دم، متن استخراج می‌کنم (OCR)، ترجمه می‌کنم.\n\n"
+        "⚡ <b>نکته:</b> من فارسی母语 هستم، انگلیسی هم بلدم، ادم‌هم باهام راحت باش!\n\n"
+        "کمکی لازم داری؟ /model بزن یه مدل انتخاب کن و شروع کن! 🚀",
         parse_mode="HTML",
         reply_markup=get_help_keyboard()
     )
@@ -69,6 +84,19 @@ async def cmd_setmodel(message: Message, ai_client):
     ai_client.model = model_name
     logger.info("Model changed to %s by user %s in chat %s", model_name, message.from_user.id, message.chat.id)
     await message.answer(f"🧠 <b>Brain swapped!</b> Now running <code>{model_name}</code>.", parse_mode="HTML")
+
+
+@router.message(Command("model"))
+async def cmd_model(message: Message, ai_client):
+    """Show model selection menu with inline keyboard."""
+    current_model = ai_client.model if ai_client else "gpt-4o"
+    await message.answer(
+        f"🤖 <b>انتخاب مدل AI</b>\n\n"
+        f"مدل فعلی: <code>{current_model}</code>\n\n"
+        f"یه مدل انتخاب کن تا بلافاصله عوض بشه:",
+        parse_mode="HTML",
+        reply_markup=get_model_keyboard(current_model)
+    )
 
 
 @router.message(Command("owner"))
@@ -180,12 +208,34 @@ async def cb_model_selected(callback: CallbackQuery, ai_client):
     model_id = callback.data.split(":", 1)[1]
     ai_client.model = model_id
     logger.info("Model changed to %s by user %s via callback", model_id, callback.from_user.id)
+    
+    # Find model display name
+    model_names = {
+        "glm-5.2": "🧠 GLM-5.2",
+        "minimax-m3": "⚡ MiniMax-M3",
+        "nemotron-3-ultra": "🚀 Nemotron-3-Ultra",
+        "gpt-4o": "🤖 GPT-4o",
+        "gpt-4o-mini": "⚡ GPT-4o Mini",
+        "gpt-4-turbo": "🚀 GPT-4 Turbo",
+        "claude-3-5-sonnet": "🎭 Claude 3.5 Sonnet",
+        "gemini-1.5-pro": "💎 Gemini 1.5 Pro",
+        "deepseek-chat": "🔍 DeepSeek Chat",
+        "qwen-2.5-72b": "🐉 Qwen 2.5 72B",
+    }
+    display_name = model_names.get(model_id, model_id)
+    
     await callback.message.edit_text(
-        f"🧠 <b>Brain swapped!</b> Now running <code>{model_id}</code>.\n\nWant to try another?",
+        f"✅ <b>مدل با موفقیت تغییر کرد!</b>\n\n"
+        f"مدل فعال: <b>{display_name}</b>\n"
+        f"<code>{model_id}</code>\n\n"
+        f"حالا می‌تونی از مدل جدید استفاده کنی 😊",
         parse_mode="HTML",
-        reply_markup=get_model_selection_keyboard(model_id)
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔙 منوی اصلی", callback_data="menu:main")],
+            [InlineKeyboardButton(text="🤖 انتخاب مدل دیگه", callback_data="settings:model")],
+        ])
     )
-    await callback.answer(f"Model changed to {model_id}")
+    await callback.answer(f"✅ به {display_name} تغییر کرد")
 
 
 @router.callback_query(lambda c: c.data == "menu:owner")

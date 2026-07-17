@@ -74,14 +74,16 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
 def get_model_selection_keyboard(current_model: str = "") -> InlineKeyboardMarkup:
     """Model selection keyboard."""
     models = [
-        ("gpt-4o", "GPT-4o"),
-        ("gpt-4o-mini", "GPT-4o Mini"),
-        ("gpt-4-turbo", "GPT-4 Turbo"),
-        ("gpt-3.5-turbo", "GPT-3.5 Turbo"),
-        ("claude-3-5-sonnet", "Claude 3.5 Sonnet"),
-        ("claude-3-haiku", "Claude 3 Haiku"),
-        ("gemini-1.5-pro", "Gemini 1.5 Pro"),
-        ("gemini-1.5-flash", "Gemini 1.5 Flash"),
+        ("glm-5.2", "🧠 GLM-5.2"),
+        ("minimax-m3", "⚡ MiniMax-M3"),
+        ("nemotron-3-ultra", "🚀 Nemotron-3-Ultra"),
+        ("gpt-4o", "🤖 GPT-4o"),
+        ("gpt-4o-mini", "⚡ GPT-4o Mini"),
+        ("gpt-4-turbo", "🚀 GPT-4 Turbo"),
+        ("claude-3-5-sonnet", "🎭 Claude 3.5 Sonnet"),
+        ("gemini-1.5-pro", "💎 Gemini 1.5 Pro"),
+        ("deepseek-chat", "🔍 DeepSeek Chat"),
+        ("qwen-2.5-72b", "🐉 Qwen 2.5 72B"),
     ]
     
     buttons = []
@@ -98,7 +100,39 @@ def get_model_selection_keyboard(current_model: str = "") -> InlineKeyboardMarku
     if row:
         buttons.append(row)
     
-    buttons.append([InlineKeyboardButton(text="🔙 Back", callback_data="settings:model")])
+    buttons.append([InlineKeyboardButton(text="🔙 Back to Menu", callback_data="menu:main")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_model_keyboard(current_model: str = "") -> InlineKeyboardMarkup:
+    """Compact model keyboard for /model command."""
+    models = [
+        ("glm-5.2", "🧠 GLM-5.2"),
+        ("minimax-m3", "⚡ MiniMax-M3"),
+        ("nemotron-3-ultra", "🚀 Nemotron-3-Ultra"),
+        ("gpt-4o", "🤖 GPT-4o"),
+        ("gpt-4o-mini", "⚡ GPT-4o Mini"),
+        ("claude-3-5-sonnet", "🎭 Claude 3.5 Sonnet"),
+        ("gemini-1.5-pro", "💎 Gemini 1.5 Pro"),
+        ("deepseek-chat", "🔍 DeepSeek Chat"),
+        ("qwen-2.5-72b", "🐉 Qwen 2.5 72B"),
+    ]
+    
+    buttons = []
+    row = []
+    for model_id, model_name in models:
+        marker = " ✅" if model_id == current_model else ""
+        row.append(InlineKeyboardButton(
+            text=f"{model_name}{marker}", 
+            callback_data=f"model:{model_id}"
+        ))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    
+    buttons.append([InlineKeyboardButton(text="🔙 Main Menu", callback_data="menu:main")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
