@@ -145,36 +145,42 @@ async def cmd_me(message: Message):
 # Callback handlers for inline keyboards
 @router.callback_query(lambda c: c.data == "menu:main")
 async def cb_main_menu(callback: CallbackQuery):
-    is_owner = callback.from_user.id == config.owner_id
-    if is_owner:
-        text = (
-            f"👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
-            f"من جاوید هستم، همشیرِ کد تو. هر چی خواستی بپرس، کد بنویس، تحلیل کن، یا فقط باهام گپ بزن.\n\n"
-            f"<b>🎯 دستورات مخصوص تو:</b>\n"
-            f"• /model — عوض کردن مدل AI با کیبورد شیک\n"
-            f"• /clear — ریست حافظه\n"
-            f"• /owner — اطلاعات خالق (همون تو!)\n"
-            f"• /me — پروفایل تو\n"
-            f"• /help — راهنمای کامل\n\n"
-            f"دستور بده، بی‌زحمت! 🚀"
-        )
+    logger.info("cb_main_menu triggered by user %s", callback.from_user.id)
+    try:
+        is_owner = callback.from_user.id == config.owner_id
+        if is_owner:
+            text = (
+                f"👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
+                f"من جاوید هستم، همشیرِ کد تو. هر چی خواستی بپرس، کد بنویس، تحلیل کن، یا فقط باهام گپ بزن.\n\n"
+                f"<b>🎯 دستورات مخصوص تو:</b>\n"
+                f"• /model — عوض کردن مدل AI با کیبورد شیک\n"
+                f"• /clear — ریست حافظه\n"
+                f"• /owner — اطلاعات خالق (همون تو!)\n"
+                f"• /me — پروفایل تو\n"
+                f"• /help — راهنمای کامل\n\n"
+                f"دستور بده، بی‌زحمت! 🚀"
+            )
+        else:
+            user_name = callback.from_user.first_name or "رفیق"
+            text = (
+                f"🌟 <b>سلام {user_name}! من جاوید هستم — رفیق هوش‌مصنوعی‌ت.</b>\n\n"
+                f"💬 در چت خصوصی باهام حرف بزن، در گروه‌ها منشن کن یا ریپلای بده.\n"
+                f"🧠 مکالمه‌هامو یادم میره: کد نویسی، ترجمه، تحلیل، خلاقیت و...\n\n"
+                f"<b>🎯 دستورات سریع:</b>\n"
+                f"• /model — تغییر مدل AI با دکمه‌های شیک\n"
+                f"• /clear — پاک کردن حافظه چت\n"
+                f"• /search <جستجو> — سرچ وب با Tavily\n"
+                f"• /owner — خالق من رو ببین\n"
+                f"• /me — پروفایل خودت\n"
+                f"• /help — راهنمای کامل\n\n"
+                f"چه کاری از دست من برمیاد؟ 😊"
+            )
+        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
+    except Exception as e:
+        logger.error("Error in cb_main_menu: %s", e, exc_info=True)
+        await callback.answer("❌ خطا در بازگشت به منو", show_alert=True)
     else:
-        user_name = callback.from_user.first_name or "رفیق"
-        text = (
-            f"🌟 <b>سلام {user_name}! من جاوید هستم — رفیق هوش‌مصنوعی‌ت.</b>\n\n"
-            f"💬 در چت خصوصی باهام حرف بزن، در گروه‌ها منشن کن یا ریپلای بده.\n"
-            f"🧠 مکالمه‌هامو یادم میره: کد نویسی، ترجمه، تحلیل، خلاقیت و...\n\n"
-            f"<b>🎯 دستورات سریع:</b>\n"
-            f"• /model — تغییر مدل AI با دکمه‌های شیک\n"
-            f"• /clear — پاک کردن حافظه چت\n"
-            f"• /search <جستجو> — سرچ وب با Tavily\n"
-            f"• /owner — خالق من رو ببین\n"
-            f"• /me — پروفایل خودت\n"
-            f"• /help — راهنمای کامل\n\n"
-            f"چه کاری از دست من برمیاد؟ 😊"
-        )
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
-    await callback.answer()
+        await callback.answer()
 
 
 @router.callback_query(lambda c: c.data == "menu:help")
@@ -548,10 +554,15 @@ async def cb_chat_translate(callback: CallbackQuery, ai_client, history_manager,
 @router.callback_query(lambda c: c.data == "chat:clear")
 async def cb_chat_clear(callback: CallbackQuery, history_manager, bot_username: str):
     """Clear conversation history."""
-    await history_manager.clear(callback.message.chat.id)
-    await callback.message.edit_text(
-        "🧹 <b>Done!</b> Conversation history wiped clean. Fresh start!",
-        parse_mode="HTML",
-        reply_markup=get_main_menu_keyboard()
-    )
-    await callback.answer("History cleared!")
+    try:
+        await history_manager.clear(callback.message.chat.id)
+        await callback.message.edit_text(
+            "🧹 <b>Done!</b> Conversation history wiped clean. Fresh start!",
+            parse_mode="HTML",
+            reply_markup=get_main_menu_keyboard()
+        )
+    except Exception as e:
+        logger.error("Error in cb_chat_clear: %s", e, exc_info=True)
+        await callback.answer("❌ خطا در پاک کردن حافظه", show_alert=True)
+    else:
+        await callback.answer("History cleared!")
