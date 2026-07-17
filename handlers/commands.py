@@ -256,7 +256,7 @@ async def cb_model_selected(callback: CallbackQuery, ai_client):
         f"حالا می‌تونی از مدل جدید استفاده کنی 😊",
         parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔙 منوی اصلی", callback_data="menu:main")],
+            [InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main")],
             [InlineKeyboardButton(text="🤖 انتخاب مدل دیگر", callback_data="settings:model")],
         ])
     )

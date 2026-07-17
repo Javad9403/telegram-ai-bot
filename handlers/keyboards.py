@@ -116,7 +116,7 @@ def get_model_selection_keyboard(current_model: str = "") -> InlineKeyboardMarku
     if row:
         buttons.append(row)
     
-    buttons.append([InlineKeyboardButton(text="🔙 منوی اصلی", callback_data="menu:main")])
+    buttons.append([InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -136,7 +136,7 @@ def get_model_keyboard(current_model: str = "") -> InlineKeyboardMarkup:
     if row:
         buttons.append(row)
     
-    buttons.append([InlineKeyboardButton(text="🔙 منوی اصلی", callback_data="menu:main")])
+    buttons.append([InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
