@@ -7,6 +7,7 @@ from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
 
 from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name, OwnerFilter
+from handlers.keyboards import get_chat_followup_keyboard
 from config import config
 
 router = Router()
@@ -141,8 +142,13 @@ async def _process_message(
 
             await history_manager.add_message(message.chat.id, "assistant", full_response)
 
-            for part in _split_long_message(full_response):
-                await message.answer(part, parse_mode="Markdown")
+            parts = _split_long_message(full_response)
+            for i, part in enumerate(parts):
+                if i == len(parts) - 1:
+                    # Add follow-up keyboard only to the last part
+                    await message.answer(part, parse_mode="Markdown", reply_markup=get_chat_followup_keyboard())
+                else:
+                    await message.answer(part, parse_mode="Markdown")
 
         except Exception as e:
             logger.error("Error processing message in chat %s: %s", message.chat.id, e, exc_info=True)

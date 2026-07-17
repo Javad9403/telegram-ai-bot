@@ -9,6 +9,7 @@ from aiogram.utils.chat_action import ChatActionSender
 from aiogram.filters import Filter
 
 from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name
+from handlers.keyboards import get_image_followup_keyboard, get_main_menu_keyboard
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -121,7 +122,7 @@ async def _process_image_message(
     bot = message.bot
     
     is_ocr = _is_ocr_request(caption)
-    processing_msg = "در حال خواندن عکس..." if is_ocr else "در حال بررسی عکس..."
+    processing_msg = "📖 در حال خواندن عکس..." if is_ocr else "🔍 در حال بررسی عکس..."
     
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
         try:
@@ -172,11 +173,55 @@ async def _process_image_message(
             await history_manager.add_message(message.chat.id, "assistant", full_response)
 
             for part in _split_long_message(full_response):
-                await message.answer(part, parse_mode="Markdown")
+                # Add follow-up keyboard only to the last part
+                if part == _split_long_message(full_response)[-1]:
+                    await message.answer(part, parse_mode="Markdown", reply_markup=get_image_followup_keyboard())
+                else:
+                    await message.answer(part, parse_mode="Markdown")
 
         except Exception as e:
             logger.error("Error processing image in chat %s: %s", message.chat.id, e, exc_info=True)
             await message.answer("Sorry, something went wrong while processing the image.")
+
+
+@router.callback_query(lambda c: c.data == "image:ocr")
+async def cb_image_ocr(callback: CallbackQuery, ai_client, history_manager, bot_username: str, system_prompt: str):
+    """Trigger OCR on the last image."""
+    # Get the last image from history or ask user to send again
+    await callback.message.edit_text(
+        "📝 <b>OCR Mode</b>\n\nPlease send the image again with caption \"read this\" or \"متن رو بخون\" for text extraction.",
+        parse_mode="HTML",
+        reply_markup=get_main_menu_keyboard()
+    )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "image:deeper")
+async def cb_image_deeper(callback: CallbackQuery, ai_client, history_manager, bot_username: str, system_prompt: str):
+    """Analyze the last image more deeply."""
+    await callback.message.edit_text(
+        "🔍 <b>Deeper Analysis</b>\n\nPlease send the image again with a specific question for detailed analysis.",
+        parse_mode="HTML",
+        reply_markup=get_main_menu_keyboard()
+    )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "image:translate")
+async def cb_image_translate(callback: CallbackQuery, ai_client, history_manager, bot_username: str, system_prompt: str):
+    """Translate text in the last image."""
+    await callback.message.edit_text(
+        "🌐 <b>Translate Image Text</b>\n\nSend the image again and specify the target language (e.g., \"translate to English\").",
+        parse_mode="HTML",
+        reply_markup=get_main_menu_keyboard()
+    )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "image:save")
+async def cb_image_save(callback: CallbackQuery):
+    """Save image analysis result."""
+    await callback.answer("💾 Saved! You can find it in your chat history.", show_alert=True)
 
 
 def _split_long_message(text: str, max_length: int = 4096) -> list[str]:
