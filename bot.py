@@ -14,6 +14,7 @@ from handlers import chat as chat_handler
 from handlers import web_search as web_search_handler
 from handlers import image as image_handler
 from handlers import secretary as secretary_handler
+from handlers import business as business_handler
 from utils.ai_client import AIClient
 from utils.history import HistoryManager
 from utils.secretary import SecretaryManager
@@ -92,6 +93,7 @@ def create_dispatcher() -> Dispatcher:
     dp.include_router(chat_handler.router)
     dp.include_router(image_handler.router)
     dp.include_router(secretary_handler.router)
+    dp.include_router(business_handler.router)
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
