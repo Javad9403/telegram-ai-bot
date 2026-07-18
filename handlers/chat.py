@@ -6,7 +6,7 @@ from aiogram.enums import ChatType, ChatAction
 from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
 
-from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name, OwnerFilter
+from utils.filters import ChatTypeFilter, MentionFilter, ReplyToBotFilter, BotNameFilter, PersianNameFilter, clean_persian_name, OwnerFilter, CommandFilter
 from handlers.keyboards import get_chat_followup_keyboard
 from config import config
 
@@ -41,6 +41,7 @@ def _split_long_message(text: str, max_length: int = 4096) -> list[str]:
 @router.message(
     ChatTypeFilter([ChatType.PRIVATE]),
     F.text,
+    CommandFilter(),
 )
 async def handle_private_message(message: Message, ai_client, history_manager, bot_username: str, system_prompt: str, owner_id: int, owner_name: str, owner_roles: list[str]):
     owner_filter = OwnerFilter(owner_id)

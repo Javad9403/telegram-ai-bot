@@ -82,3 +82,12 @@ class OwnerFilter(Filter):
 
     async def __call__(self, message: Message) -> bool:
         return message.from_user and message.from_user.id == self.owner_id
+
+
+class CommandFilter(Filter):
+    """Filter to exclude bot commands (messages starting with /)."""
+    
+    async def __call__(self, message: Message) -> bool:
+        if not message.text:
+            return True
+        return not message.text.strip().startswith("/")
