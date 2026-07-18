@@ -16,6 +16,7 @@ from handlers.keyboards import (
     get_secretary_remind_keyboard, get_secretary_note_keyboard,
     get_secretary_calendar_keyboard,
 )
+from utils.secretary import SecretaryManager
 
 router = Router()
 logger = logging.getLogger(__name__)
