@@ -31,6 +31,7 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher):
     dispatcher["bot_username"] = bot_user.username
     dispatcher["bot_id"] = bot_user.id
     dispatcher["bot_name"] = bot_user.first_name.lower()
+    dispatcher["bot"] = bot  # Store bot for business connection handler
 
     await bot.set_my_commands(
         [

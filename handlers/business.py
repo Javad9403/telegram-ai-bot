@@ -42,6 +42,43 @@ async def handle_business_connection(business_connection: BusinessConnection):
             business_connection.rights.can_reply if business_connection.rights else "N/A",
             business_connection.rights.can_transfer if business_connection.rights else "N/A"
         )
+        
+        # Send confirmation message to the user
+        try:
+            bot = business_connection.bot
+            if not bot:
+                # Try to get bot from dispatcher context
+                from aiogram import Bot
+                bot = Bot.get_current()
+            if bot:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=(
+                        "✅ <b>اتوماسیون چت فعال شد!</b>\n\n"
+                        "جاوید الان به عنوان دستیار اتوماتیک شما در تلگرام فعال است.\n\n"
+                        "🤖 <b>قابلیت‌ها:</b>\n"
+                        "• پاسخ خودکار به پیام‌های دریافتی\n"
+                        "• مدیریت تسک‌ها، یادآوری‌ها، یادداشت‌ها\n"
+                        "• تقویم و گزارش‌های روزانه/هفتگی\n\n"
+                        "📋 <b>دستورات سکرتر:</b>\n"
+                        "• <code>/remind [زمان] [متن]</code> - تنظیم یادآوری\n"
+                        "• <code>/task add [متن]</code> - افزودن تسک\n"
+                        "• <code>/tasks</code> - مشاهده تسک‌ها\n"
+                        "• <code>/note [متن]</code> - یادداشت سریع\n"
+                        "• <code>/calendar</code> - تقویم\n"
+                        "• <code>/summary</code> - گزارش روزانه/هفتگی\n\n"
+                        "💡 <b>یا به زبان طبیعی بنویسید:</b>\n"
+                        "• \"یادآوری کن فردا ساعت ۹ جلسه دارم\"\n"
+                        "• \"تسک جدید: خرید شیر\"\n"
+                        "• \"یادداشت: تلفن علی ۰۹۱۲...\"\n"
+                        "• \"خلاصه امروز رو بده\"\n\n"
+                        "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        "دیتا فقط برای شما ذخیره می‌شود 🔒"
+                    ),
+                    parse_mode="HTML"
+                )
+        except Exception as e:
+            logger.warning("Could not send business connection confirmation: %s", e)
     else:
         logger.info("User %s disconnected bot from chat automation", user_id)
 
