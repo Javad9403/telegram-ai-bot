@@ -83,6 +83,21 @@ async def handle_business_connection(business_connection: BusinessConnection):
         logger.info("User %s disconnected bot from chat automation", user_id)
 
 
+# ========== CATCH-ALL BUSINESS MESSAGE HANDLER (DEBUG) ==========
+
+@router.business_message()
+async def handle_any_business_message(message: Message):
+    """Catch-all handler to log all business messages."""
+    logger.info(
+        "Business message received: chat_id=%s, user_id=%s, text=%s, connection_id=%s",
+        message.chat.id,
+        message.from_user.id if message.from_user else "N/A",
+        (message.text or message.caption or "")[:50],
+        message.business_connection_id
+    )
+    # Don't return - let other handlers process
+
+
 # ========== BUSINESS MESSAGE HANDLERS ==========
 
 async def _process_business_message(
@@ -96,14 +111,19 @@ async def _process_business_message(
     owner_roles: list[str],
 ):
     """Process a business message (automated chat)."""
-    # Only process if this is from the business account owner
-    # In automation mode, messages come from the business account
     business_connection_id = message.business_connection_id
     
-    # Get the user ID from business connection context
-    # The message is from the customer, we reply as the business
+    if not business_connection_id:
+        logger.warning("No business_connection_id in message, skipping")
+        return
+    
     chat_id = message.chat.id
     user_id = message.from_user.id if message.from_user else 0
+    
+    logger.info(
+        "Processing business message: chat=%s, from_user=%s, is_owner=%s",
+        chat_id, user_id, user_id == owner_id
+    )
     
     # Check if user is the owner (for secretary features)
     is_owner = user_id == owner_id
@@ -114,10 +134,15 @@ async def _process_business_message(
     
     text = message.text or message.caption or ""
     
+    if not text:
+        logger.info("Empty business message, skipping")
+        return
+    
     # First check for secretary commands (natural language)
     from handlers.secretary import _process_secretary_message
     processed = await _process_secretary_message(message, secretary, text, chat_id)
     if processed:
+        logger.info("Secretary command processed")
         return
     
     # If not a secretary command, process as normal AI chat
@@ -138,19 +163,26 @@ async def _process_business_message(
             
             await history_manager.add_message(chat_id, "assistant", full_response)
             
-            # Send reply as business account
-            await message.answer(
-                full_response, 
+            # Send reply as business account using business_connection_id
+            logger.info("Sending business reply to chat %s with connection_id %s", chat_id, business_connection_id)
+            await message.bot.send_message(
+                chat_id=chat_id,
+                text=full_response,
                 parse_mode="Markdown",
                 business_connection_id=business_connection_id
             )
+            logger.info("Business reply sent successfully")
             
         except Exception as e:
             logger.error("Error processing business message in chat %s: %s", chat_id, e, exc_info=True)
-            await message.answer(
-                "متأسفم، خطایی پیش اومد. بعدا امتحان کن.",
-                business_connection_id=business_connection_id
-            )
+            try:
+                await message.bot.send_message(
+                    chat_id=chat_id,
+                    text="متأسفم، خطایی پیش اومد. بعدا امتحان کن.",
+                    business_connection_id=business_connection_id
+                )
+            except Exception as e2:
+                logger.error("Failed to send error message: %s", e2)
 
 
 @router.business_message(
