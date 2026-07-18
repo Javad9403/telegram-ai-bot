@@ -298,6 +298,23 @@ async def handle_deleted_business_messages(event: BusinessMessagesDeleted):
 @router.business_message(CommandStart())
 async def cmd_business_start(message: Message):
     """Handle /start in business/automation mode."""
+    # Check for deep link: /start bizChat<chat_id>
+    if message.text and message.text.startswith("/start bizChat"):
+        chat_id_str = message.text.replace("/start bizChat", "").strip()
+        text = (
+            f"🤖 <b>مدیریت چت {chat_id_str}</b>\n\n"
+            "این چت در حالت اتوماسیون مدیریت می‌شود.\n\n"
+            "دستورات موجود:\n"
+            "• <code>/remind</code> - یادآوری\n"
+            "• <code>/task</code> - تسک‌ها\n"
+            "• <code>/note</code> - یادداشت\n"
+            "• <code>/calendar</code> - تقویم\n"
+            "• <code>/summary</code> - گزارش\n\n"
+            "یا از منوی اصلی استفاده کنید."
+        )
+        await message.answer(text, parse_mode="HTML", business_connection_id=message.business_connection_id)
+        return
+    
     user_id = message.from_user.id if message.from_user else 0
     is_owner = user_id == (message.bot.get("owner_id", 0))
     
