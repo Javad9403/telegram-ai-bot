@@ -8,7 +8,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from config import config
 from handlers.keyboards import (
     get_main_menu_keyboard, get_settings_keyboard, get_help_keyboard,
-    get_model_selection_keyboard, get_chat_followup_keyboard, get_model_keyboard
+    get_model_selection_keyboard, get_chat_followup_keyboard, get_model_keyboard,
+    get_owner_keyboard, get_profile_keyboard, get_model_changed_keyboard,
+    get_model_display_name
 )
 
 router = Router()
@@ -22,49 +24,64 @@ async def cmd_start(message: Message):
     
     if is_owner:
         welcome_text = (
-            f"👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
-            f"من جاوید هستم، همشیرِ کد تو. هر چی خواستی بپرس، کد بنویس، تحلیل کن، یا فقط باهام گپ بزن.\n\n"
-            f"<b>🎯 دستورات مخصوص تو:</b>\n"
-            f"• /model — عوض کردن مدل AI با کیبورد شیک\n"
-            f"• /clear — ریست حافظه\n"
-            f"• /owner — اطلاعات خالق (همون تو!)\n"
-            f"• /me — پروفایل تو\n"
-            f"• /help — راهنمای کامل\n\n"
-            f"دستور بده، بی‌زحمت! 🚀"
+            "👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "من <b>جاوید</b> هستم، همشیرِ کد تو.\n"
+            "هرچی خواستی بپرس، کد بنویس، تحلیل کن،\n"
+            "یا فقط باهام گپ بزن.\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "🎯 <b>دستورات مخصوص تو:</b>\n"
+            "┌────────────────────────┐\n"
+            "│  /model    🤖  مدل AI   │\n"
+            "│  /clear    🗑️  حافظه    │\n"
+            "│  /owner    👑  من        │\n"
+            "│  /me       👤  پروفایل  │\n"
+            "│  /help     ❓  راهنما   │\n"
+            "└────────────────────────┘\n\n"
+            "دستور بده، بی‌زحمت! 🚀"
         )
     else:
+        current_model = config.ai_model
+        model_display = get_model_display_name(current_model)
         welcome_text = (
-            f"🌟 <b>سلام {user_name}! من جاوید هستم — رفیق هوش‌مصنوعی‌ت.</b>\n\n"
-            f"💬 در چت خصوصی باهام حرف بزن، در گروه‌ها منشن کن یا ریپلای بده.\n"
-            f"🧠 مکالمه‌هامو یادم میره: کد نویسی، ترجمه، تحلیل، خلاقیت و...\n\n"
-            f"<b>🎯 دستورات سریع:</b>\n"
-            f"• /model — تغییر مدل AI با دکمه‌های شیک\n"
-            f"• /clear — پاک کردن حافظه چت\n"
-            f"• /search <جستجو> — سرچ وب با Tavily\n"
-            f"• /owner — خالق من رو ببین\n"
-            f"• /me — پروفایل خودت\n"
-            f"• /help — راهنمای کامل\n\n"
-            f"چه کاری از دست من برمیاد؟ 😊"
+            f"🌟 <b>سلام {user_name}!</b> من <b>جاوید</b> هستم — رفیق هوش‌مصنوعی‌ت.\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "💬 <b>چت خصوصی:</b> مستقیم باهام حرف بزن\n"
+            "👥 <b>گروه‌ها:</b> منشن کن (@username) یا ریپلای بده\n"
+            "🧠 <b>حافظه:</b> مکالمه‌هامو یادم میره\n"
+            "🤖 <b>مدل فعلی:</b> " + model_display + f"\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "🎯 <b>دستورات سریع:</b>\n"
+            "┌─────────────────────────────┐\n"
+            "│  /model      🤖  تغییر مدل   │\n"
+            "│  /clear      🗑️  پاک حافظه  │\n"
+            "│  /search     🔍  جستجوی وب   │\n"
+            "│  /owner      👑  خالق من      │\n"
+            "│  /me         👤  پروفایل     │\n"
+            "│  /help       ❓  راهنما      │\n"
+            "└─────────────────────────────┘\n\n"
+            "💡 <b>نکته:</b> عکس هم بفرست، تحلیل می‌کنم!\n\n"
+            "چه کاری از دست من برمیاد؟ 😊"
         )
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
 
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
-    await message.answer(
-        "<b>📖 راهنمای جاوید</b>\n\n"
-        "• <b>چت خصوصی:</b> مستقیم باهام حرف بزن، جواب می‌دم.\n"
-        "• <b>گروه‌ها:</b> منشن کن (@username) یا به پیام‌ام ریپلای بده.\n"
-        "• <b>فرمت‌دهی:</b> **پرش**, *کج*, `کد`, لیست‌ها و... رو می‌فهمم.\n"
-        "• <b>حافظه:</b> /clear برای ریست کردن گفتگو.\n"
-        "• <b>مدل‌ها:</b> /model برای انتخاب مدل AI (GLM-5.2، Nemotron، GPT-4o، Claude...).\n"
-        "• <b>جستجو:</b> /search یا بپرس \"آخرین قیمت بیت‌کوین چقدره؟\" — خودم سرچ می‌کنم.\n"
-        "• <b>عکس:</b> عکس بفرست، توضیح می‌دم، متن استخراج می‌کنم (OCR)، ترجمه می‌کنم.\n\n"
-        "⚡ <b>نکته:</b> من فارسی母语 هستم، انگلیسی هم بلدم، ادم‌هم باهام راحت باش!\n\n"
-        "کمکی لازم داری؟ /model بزن یه مدل انتخاب کن و شروع کن! 🚀",
-        parse_mode="HTML",
-        reply_markup=get_help_keyboard()
+    help_text = (
+        "📖 <b>راهنمای جاوید</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "💬 <b>چت خصوصی:</b> مستقیم باهام حرف بزن، جواب می‌دم.\n"
+        "👥 <b>گروه‌ها:</b> منشن کن (@username) یا به پیام‌ام ریپلای بده.\n"
+        "🎨 <b>فرمت‌دهی:</b> <b>پرشت</b>, <i>کج</i>, <code>کد</code>, لیست‌ها و... رو می‌فهمم.\n"
+        "🧠 <b>حافظه:</b> /clear برای ریست کردن گفتگو.\n"
+        "🤖 <b>مدل‌ها:</b> /model برای انتخاب مدل AI (GLM-5.2، Nemotron، Llama، Gemma...).\n"
+        "🔍 <b>جستجو:</b> /search یا بپرس \"آخرین قیمت بیت‌کوین چقدره؟\" — خودم سرچ می‌کنم.\n"
+        "🖼️ <b>عکس:</b> عکس بفرست، توضیح می‌دم، متن استخراج می‌کنم (OCR)، ترجمه می‌کنم.\n\n"
+        "⚡ <b>نکته:</b> من فارسی‌زبانم، انگلیسی هم بلدم، آدم‌هم باهام راحت باش!\n\n"
+        "کمکی لازم داری؟ /model بزن یه مدل انتخاب کن و شروع کن! 🚀"
     )
+    await message.answer(help_text, parse_mode="HTML", reply_markup=get_help_keyboard())
 
 
 @router.message(Command("clear", "clearhistory"))
@@ -150,30 +167,45 @@ async def cb_main_menu(callback: CallbackQuery):
         is_owner = callback.from_user.id == config.owner_id
         if is_owner:
             text = (
-                f"👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
-                f"من جاوید هستم، همشیرِ کد تو. هر چی خواستی بپرس، کد بنویس، تحلیل کن، یا فقط باهام گپ بزن.\n\n"
-                f"<b>🎯 دستورات مخصوص تو:</b>\n"
-                f"• /model — عوض کردن مدل AI با کیبورد شیک\n"
-                f"• /clear — ریست حافظه\n"
-                f"• /owner — اطلاعات خالق (همون تو!)\n"
-                f"• /me — پروفایل تو\n"
-                f"• /help — راهنمای کامل\n\n"
-                f"دستور بده، بی‌زحمت! 🚀"
+                "👑 <b>سلام جواد جان! خالق من خوش اومدی 😍</b>\n\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "من <b>جاوید</b> هستم، همشیرِ کد تو.\n"
+                "هرچی خواستی بپرس، کد بنویس، تحلیل کن،\n"
+                "یا فقط باهام گپ بزن.\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                "🎯 <b>دستورات مخصوص تو:</b>\n"
+                "┌────────────────────────┐\n"
+                "│  /model    🤖  مدل AI   │\n"
+                "│  /clear    🗑️  حافظه    │\n"
+                "│  /owner    👑  من        │\n"
+                "│  /me       👤  پروفایل  │\n"
+                "│  /help     ❓  راهنما   │\n"
+                "└────────────────────────┘\n\n"
+                "دستور بده، بی‌زحمت! 🚀"
             )
         else:
             user_name = callback.from_user.first_name or "رفیق"
+            current_model = config.ai_model
+            model_display = get_model_display_name(current_model)
             text = (
-                f"🌟 <b>سلام {user_name}! من جاوید هستم — رفیق هوش‌مصنوعی‌ت.</b>\n\n"
-                f"💬 در چت خصوصی باهام حرف بزن، در گروه‌ها منشن کن یا ریپلای بده.\n"
-                f"🧠 مکالمه‌هامو یادم میره: کد نویسی، ترجمه، تحلیل، خلاقیت و...\n\n"
-                f"<b>🎯 دستورات سریع:</b>\n"
-                f"• /model — تغییر مدل AI با دکمه‌های شیک\n"
-                f"• /clear — پاک کردن حافظه چت\n"
-                f"• /search <جستجو> — سرچ وب با Tavily\n"
-                f"• /owner — خالق من رو ببین\n"
-                f"• /me — پروفایل خودت\n"
-                f"• /help — راهنمای کامل\n\n"
-                f"چه کاری از دست من برمیاد؟ 😊"
+                f"🌟 <b>سلام {user_name}!</b> من <b>جاوید</b> هستم — رفیق هوش‌مصنوعی‌ت.\n\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "💬 <b>چت خصوصی:</b> مستقیم باهام حرف بزن\n"
+                "👥 <b>گروه‌ها:</b> منشن کن (@username) یا ریپلای بده\n"
+                "🧠 <b>حافظه:</b> مکالمه‌هامو یادم میره\n"
+                f"🤖 <b>مدل فعلی:</b> {model_display}\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                "🎯 <b>دستورات سریع:</b>\n"
+                "┌─────────────────────────────┐\n"
+                "│  /model      🤖  تغییر مدل   │\n"
+                "│  /clear      🗑️  پاک حافظه  │\n"
+                "│  /search     🔍  جستجوی وب   │\n"
+                "│  /owner      👑  خالق من      │\n"
+                "│  /me         👤  پروفایل     │\n"
+                "│  /help       ❓  راهنما      │\n"
+                "└─────────────────────────────┘\n\n"
+                "💡 <b>نکته:</b> عکس هم بفرست، تحلیل می‌کنم!\n\n"
+                "چه کاری از دست من برمیاد؟ 😊"
             )
         await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
     except Exception as e:
@@ -186,16 +218,18 @@ async def cb_main_menu(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data == "menu:help")
 async def cb_help(callback: CallbackQuery):
     await callback.message.edit_text(
-        "<b>📖 راهنمای جاوید</b>\n\n"
-        "• <b>چت خصوصی:</b> مستقیم باهام حرف بزن، جواب می‌دم.\n"
-        "• <b>گروه‌ها:</b> منشن کن (@username) یا به پیام‌ام ریپلای بده.\n"
-        "• <b>فرمت‌دهی:</b> **پرش**, *کج*, `کد`, لیست‌ها و... رو می‌فهمم.\n"
-        "• <b>حافظه:</b> /clear برای ریست کردن گفتگو.\n"
-        "• <b>مدل‌ها:</b> /model برای انتخاب مدل AI (GLM-5.2، Nemotron، Llama، Gemma...).\n"
-        "• <b>جستجو:</b> /search یا بپرس \"آخرین قیمت بیت‌کوین چقدره؟\" — خودم سرچ می‌کنم.\n"
-        "• <b>عکس:</b> عکس بفرست، توضیح می‌دم، متن استخراج می‌کنم (OCR)، ترجمه می‌کنم.\n\n"
-        "⚡ <b>نکته:</b> من فارسی مادربازی هستم، انگلیسی هم بلدم، آدم‌هم باهام راحت باش!\n\n"
-        "کمکی لازم داری؟ /model بزن یه مدل انتخاب کن و شروع کن! 🚀",
+        "📖 <b>راهنمای جاوید</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "💬 <b>چت خصوصی:</b> مستقیم باهام حرف بزن، جواب می‌دم.\n"
+        "👥 <b>گروه‌ها:</b> منشن کن (@username) یا به پیام‌ام ریپلای بده.\n"
+        "🎨 <b>فرمت‌دهی:</b> <b>بولد</b>, <i>ایتالیک</i>, <code>کد</code>, لیست‌ها و...\n"
+        "🧠 <b>حافظه:</b> <code>/clear</code> برای ریست کردن گفتگو.\n"
+        "🤖 <b>مدل‌ها:</b> <code>/model</code> برای انتخاب مدل AI.\n"
+        "🔍 <b>جستجو:</b> <code>/search</code> یا بپرس \"آخرین قیمت بیت‌کوین؟\" — خودم سرچ می‌کنم.\n"
+        "🖼️ <b>عکس:</b> عکس بفرست، توضیح می‌دم، OCR می‌کنم، ترجمه می‌کنم.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "⚡ <b>نکته:</b> من فارسی‌زبانم، انگلیسی هم بلدم، باهام راحت باش!\n\n"
+        "🚀 <b>آمده باش؟</b> <code>/model</code> بزن، مدل انتخاب کن و شروع کن!",
         parse_mode="HTML",
         reply_markup=get_help_keyboard()
     )
@@ -206,12 +240,13 @@ async def cb_help(callback: CallbackQuery):
 async def cb_model_menu(callback: CallbackQuery, ai_client):
     """Show model selection from main menu."""
     current = ai_client.model if ai_client else "z-ai/glm-5.2"
-    from handlers.keyboards import get_model_display_name
     current_display = get_model_display_name(current)
     await callback.message.edit_text(
         f"🤖 <b>انتخاب مدل AI</b>\n\n"
-        f"مدل فعلی: <b>{current_display}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"📌 <b>مدل فعلی:</b> {current_display}\n"
         f"<code>{current}</code>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"یه مدل انتخاب کن تا بلافاصله عوض بشه:",
         parse_mode="HTML",
         reply_markup=get_model_keyboard(current)
@@ -222,7 +257,10 @@ async def cb_model_menu(callback: CallbackQuery, ai_client):
 @router.callback_query(lambda c: c.data == "menu:settings")
 async def cb_settings(callback: CallbackQuery):
     await callback.message.edit_text(
-        "⚙️ <b>تنظیمات</b>\n\nتجربه جاوید رو سفارشی کن:",
+        "⚙️ <b>تنظیمات</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "تجربه جاوید رو سفارشی کن:\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━",
         parse_mode="HTML",
         reply_markup=get_settings_keyboard()
     )
@@ -232,12 +270,13 @@ async def cb_settings(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data == "settings:model")
 async def cb_model_selection(callback: CallbackQuery, ai_client):
     current = ai_client.model if ai_client else "z-ai/glm-5.2"
-    from handlers.keyboards import get_model_display_name
     current_display = get_model_display_name(current)
     await callback.message.edit_text(
         f"🤖 <b>انتخاب مدل AI</b>\n\n"
-        f"مدل فعلی: <b>{current_display}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"📌 <b>مدل فعلی:</b> {current_display}\n"
         f"<code>{current}</code>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"یه مدل انتخاب کن تا بلافاصله عوض بشه:",
         parse_mode="HTML",
         reply_markup=get_model_selection_keyboard(current)
@@ -251,20 +290,17 @@ async def cb_model_selected(callback: CallbackQuery, ai_client):
     ai_client.model = model_id
     logger.info("Model changed to %s by user %s via callback", model_id, callback.from_user.id)
     
-    # Find model display name from keyboards
-    from handlers.keyboards import get_model_display_name
     display_name = get_model_display_name(model_id)
     
     await callback.message.edit_text(
         f"✅ <b>مدل با موفقیت تغییر کرد!</b>\n\n"
-        f"مدل فعال: <b>{display_name}</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🤖 <b>مدل فعال:</b> {display_name}\n"
         f"<code>{model_id}</code>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"حالا می‌تونی از مدل جدید استفاده کنی 😊",
         parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main")],
-            [InlineKeyboardButton(text="🤖 انتخاب مدل دیگر", callback_data="settings:model")],
-        ])
+        reply_markup=get_model_changed_keyboard()
     )
     await callback.answer(f"✅ به {display_name} تغییر کرد")
 
@@ -274,19 +310,23 @@ async def cb_owner(callback: CallbackQuery):
     is_owner = callback.from_user.id == config.owner_id
     if is_owner:
         text = (
-            f"👑 <b>Owner Info</b>\n\n"
-            f"Name: {config.owner_name}\n"
-            f"User ID: <code>{config.owner_id}</code>\n"
-            f"Role: Creator & Developer\n\n"
-            f"Hey {config.owner_name}! 👋 You built me. That's pretty cool."
+            "👑 <b>اطلاعات خالق</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"👤 <b>نام:</b> {config.owner_name}\n"
+            f"🆔 <b>شناسه:</b> <code>{config.owner_id}</code>\n"
+            f"🎭 <b>نقش:</b> Creator & Developer\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"Hey {config.owner_name}! 👋 تو من رو ساختی. خیلی قشنگه! 😎"
         )
     else:
         text = (
-            f"👑 <b>Owner Info</b>\n\n"
-            f"Name: {config.owner_name}\n"
-            f"User ID: <code>{config.owner_id}</code>\n"
-            f"Role: Creator & Developer\n\n"
-            f"He's the one who brought me to life. 🤖✨"
+            "👑 <b>اطلاعات خالق</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"👤 <b>نام:</b> {config.owner_name}\n"
+            f"🆔 <b>شناسه:</b> <code>{config.owner_id}</code>\n"
+            f"🎭 <b>نقش:</b> Creator & Developer\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"او کسیه که من رو به حیات آورد. 🤖✨"
         )
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
     await callback.answer()
@@ -301,13 +341,15 @@ async def cb_profile(callback: CallbackQuery):
         roles.append("👑 Owner (Creator & Developer)")
     
     await callback.message.edit_text(
-        f"👤 <b>Your Profile</b>\n\n"
-        f"Name: {user.first_name or 'N/A'} {user.last_name or ''}\n"
-        f"Username: @{user.username or 'N/A'}\n"
-        f"User ID: <code>{user.id}</code>\n"
-        f"Language: {user.language_code or 'N/A'}\n"
-        f"Premium: {'✅ Yes' if user.is_premium else '❌ No'}\n"
-        f"Role: {', '.join(roles) if roles else '🙋 User'}",
+        f"👤 <b>پروفایل شما</b>\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"👤 <b>نام:</b> {user.first_name or 'N/A'} {user.last_name or ''}\n"
+        f"🔗 <b>یوزرنیم:</b> @{user.username or 'N/A'}\n"
+        f"🆔 <b>شناسه:</b> <code>{user.id}</code>\n"
+        f"🌐 <b>زبان:</b> {user.language_code or 'N/A'}\n"
+        f"⭐ <b>پرمیوم:</b> {'✅ بله' if user.is_premium else '❌ خیر'}\n"
+        f"🎭 <b>نقش:</b> {', '.join(roles) if roles else '🙋 کاربر'}\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━",
         parse_mode="HTML",
         reply_markup=get_main_menu_keyboard()
     )
@@ -317,13 +359,16 @@ async def cb_profile(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data == "menu:chat")
 async def cb_chat(callback: CallbackQuery):
     await callback.message.edit_text(
-        "💬 <b>Start Chatting</b>\n\nJust send me a message! I'll reply naturally.\n\n"
-        "<b>Tips:</b>\n"
-        "• Ask questions, get explanations\n"
-        "• Request code, writing, analysis\n"
-        "• Follow up — I remember context\n"
-        "• Use /clear to reset\n\n"
-        "What's on your mind? 🤔",
+        "💬 <b>شروع چت</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "یه پیام بفرست! من به طور طبیعی جواب می‌دم.\n\n"
+        "💡 <b>نکات:</b>\n"
+        "• سوال بپرس، توضیح بگیر\n"
+        "• کد، متن، تحلیل بخواه\n"
+        "• ادامه بده — من یادم میره\n"
+        "• از <code>/clear</code> برای ریست استفاده کن\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "دارم گوش می‌کنم... 🤔",
         parse_mode="HTML",
         reply_markup=get_main_menu_keyboard()
     )
@@ -333,12 +378,15 @@ async def cb_chat(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data == "menu:image")
 async def cb_image(callback: CallbackQuery):
     await callback.message.edit_text(
-        "🖼️ <b>Image Analysis</b>\n\nSend me a photo and I'll:\n"
-        "• Describe what's in it\n"
-        "• Extract text (OCR) — just ask \"read this\"\n"
-        "• Analyze charts, diagrams, screenshots\n"
-        "• Translate text in images\n\n"
-        "Just drop an image in chat! 📸",
+        "🖼️ <b>تحلیل عکس</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "یه عکس بفرست و من:\n"
+        "• توصیف می‌کنم چیه\n"
+        "• متن استخراج می‌کنم (OCR) — بنویس \"متن رو بخون\"\n"
+        "• چارت، دیاگرام، اسکرین‌شات تحلیل می‌کنم\n"
+        "• متن عکس رو ترجمه می‌کنم\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "فقط عکس رو توی چت رها کن! 📸",
         parse_mode="HTML",
         reply_markup=get_main_menu_keyboard()
     )
@@ -348,14 +396,17 @@ async def cb_image(callback: CallbackQuery):
 @router.callback_query(lambda c: c.data == "menu:search")
 async def cb_search(callback: CallbackQuery):
     await callback.message.edit_text(
-        "🔍 <b>Web Search</b>\n\nNeed fresh info? Use:\n"
-        "<code>/search your query here</code>\n\n"
-        "Or just ask me — I'll search when needed.\n\n"
-        "<b>Best for:</b>\n"
-        "• Current news, prices, weather\n"
-        "• Recent tech docs, releases\n"
-        "• Live sports, crypto, stocks\n\n"
-        "What do you want to find? 🔎",
+        "🔍 <b>جستجوی وب</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "اطلاعات تازه می‌خوای؟ از دستورات زیر استفاده کن:\n"
+        "<code>/search جستجوی تو اینجا</code>\n\n"
+        "یا مستقیم بپرس — خودم وقتی لازم باشه سرچ می‌کنم.\n\n"
+        "🎯 <b>مناسب برای:</b>\n"
+        "• اخبار، قیمت، آب‌وهوا\n"
+        "• داکیومنت‌های جدید تکنولوژی\n"
+        "• ورزش، کریپتو، بورس زنده\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "چی رو می‌خوای پیدا کنی؟ 🔎",
         parse_mode="HTML",
         reply_markup=get_main_menu_keyboard()
     )
@@ -367,41 +418,49 @@ async def cb_help_detail(callback: CallbackQuery):
     topic = callback.data.split(":", 1)[1]
     texts = {
         "chat": (
-            "💬 <b>Chat Tips</b>\n\n"
-            "• Be specific — better questions = better answers\n"
-            "• Follow up! I remember our conversation\n"
-            "• Ask for code, explanations, creative writing\n"
-            "• Use <code>/clear</code> when switching topics\n"
-            "• Works in Persian, English, or mixed"
+            "💬 <b>نکات چت</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "• دقیق بپرس — سوال بهتر = جواب بهتر\n"
+            "• ادامه بده! من مکالمه رو یادم میره\n"
+            "• کد، توضیح، نوشته خلاقه بخواه\n"
+            "• از <code>/clear</code> برای عوض کردن موضوع استفاده کن\n"
+            "• فارسی، انگلیسی، یا 섞ی کار می‌کنه\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━"
         ),
         "image": (
-            "🖼️ <b>Image Tips</b>\n\n"
-            "• Send any photo — I'll analyze it\n"
-            "• Add a caption for specific questions\n"
-            "• Say \"read this\" or \"متن رو بخون\" for OCR\n"
-            "• Works with screenshots, docs, handwriting\n"
-            "• I can translate text in images too"
+            "🖼️ <b>نکات عکس</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "• هر عکسی بفرست — تحلیل می‌کنم\n"
+            "• کپشن بذار برای سوال خاص\n"
+            "• بنویس \"متن رو بخون\" یا \"read this\" برای OCR\n"
+            "• اسکرین‌شات، داکیومنت، دست‌نویس هم جواب میده\n"
+            "• متن عکس رو هم ترجمه می‌کنم\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━"
         ),
         "search": (
-            "🔍 <b>Search Tips</b>\n\n"
-            "• Use <code>/search query</code> for manual search\n"
-            "• I auto-search for current info when needed\n"
-            "• Say \"more results\" or \"بیشتر\" for deep search\n"
-            "• Best for: news, prices, recent docs"
+            "🔍 <b>نکات جستجو</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "• از <code>/search جستجو</code> برای سرچ دستی استفاده کن\n"
+            "• من خودم وقتی لازم باشه سرچ می‌کنم\n"
+            "• بنویس \"بیشتر\" یا \"more results\" برای جستجوی عمیق\n"
+            "• مناسب برای: اخبار، قیمت، داکیومنت‌های جدید\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━"
         ),
         "commands": (
-            "⚙️ <b>All Commands</b>\n\n"
-            "/start — Main menu\n"
-            "/help — This guide\n"
-            "/clear — Reset chat memory\n"
-            "/setmodel <name> — Change AI model\n"
-            "/search <query> — Web search\n"
-            "/owner — Creator info\n"
-            "/me — Your profile"
+            "⚙️ <b>تمام دستورات</b>\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "/start — منوی اصلی\n"
+            "/help — همین راهنما\n"
+            "/clear — ریست حافظه چت\n"
+            "/setmodel <نام> — تغییر مدل AI\n"
+            "/search <جستجو> — جستجوی وب\n"
+            "/owner — اطلاعات خالق\n"
+            "/me — پروفایل شما\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━"
         ),
     }
     await callback.message.edit_text(
-        texts.get(topic, "Topic not found"),
+        texts.get(topic, "موضوع پیدا نشد"),
         parse_mode="HTML",
         reply_markup=get_help_keyboard()
     )
@@ -415,7 +474,7 @@ async def cb_regenerate(callback: CallbackQuery, ai_client, history_manager, bot
     # Get last user message from history
     history = await history_manager.get_history(callback.message.chat.id)
     if not history:
-        await callback.answer("Nothing to regenerate.", show_alert=True)
+        await callback.answer("چیزی برای تولید مجدد نیست.", show_alert=True)
         return
     
     # Find last user message
@@ -426,10 +485,10 @@ async def cb_regenerate(callback: CallbackQuery, ai_client, history_manager, bot
             break
     
     if not last_user_msg:
-        await callback.answer("Nothing to regenerate.", show_alert=True)
+        await callback.answer("چیزی برای تولید مجدد نیست.", show_alert=True)
         return
     
-    await callback.message.edit_text("🔄 <b>Regenerating...</b>", parse_mode="HTML")
+    await callback.message.edit_text("🔄 <b>در حال تولید مجدد...</b>", parse_mode="HTML")
     
     messages = [{"role": "system", "content": system_prompt}]
     # Add history without the last assistant message
@@ -442,7 +501,7 @@ async def cb_regenerate(callback: CallbackQuery, ai_client, history_manager, bot
         full_response = partial
     
     if not full_response:
-        full_response = "I couldn't generate a response."
+        full_response = "نتونستم جواب بدم."
     
     # Update history
     await history_manager.clear(callback.message.chat.id)
@@ -451,14 +510,16 @@ async def cb_regenerate(callback: CallbackQuery, ai_client, history_manager, bot
     await history_manager.add_message(callback.message.chat.id, "assistant", full_response)
     
     await callback.message.edit_text(full_response, parse_mode="Markdown", reply_markup=get_chat_followup_keyboard())
-    await callback.answer("Regenerated!")
+    await callback.answer("تولید مجدد شد!")
 
 
 @router.callback_query(lambda c: c.data == "chat:search")
 async def cb_chat_search(callback: CallbackQuery):
     """Trigger web search for the last topic."""
     await callback.message.edit_text(
-        "🔍 <b>Web Search</b>\n\nUse <code>/search your query</code> or just ask me to search for something specific!",
+        "🔍 <b>جستجوی وب</b>\n\n"
+        "از <code>/search جستجوی تو</code> استفاده کن یا مستقیم بپرس!\n\n"
+        "چی رو می‌خوای سرچ کنم؟ 🔎",
         parse_mode="HTML",
         reply_markup=get_chat_followup_keyboard()
     )
@@ -470,7 +531,7 @@ async def cb_chat_explain(callback: CallbackQuery, ai_client, history_manager, b
     """Ask AI to explain more about the last topic."""
     history = await history_manager.get_history(callback.message.chat.id)
     if not history:
-        await callback.answer("No context to explain.", show_alert=True)
+        await callback.answer("موضوعی برای توضیح وجود نداره.", show_alert=True)
         return
     
     # Get last exchange
@@ -485,16 +546,16 @@ async def cb_chat_explain(callback: CallbackQuery, ai_client, history_manager, b
             break
     
     if not last_user:
-        await callback.answer("Nothing to explain.", show_alert=True)
+        await callback.answer("موضوعی برای توضیح وجود نداره.", show_alert=True)
         return
     
-    await callback.message.edit_text("💡 <b>Explaining more...</b>", parse_mode="HTML")
+    await callback.message.edit_text("💡 <b>در حال توضیح بیشتر...</b>", parse_mode="HTML")
     
     messages = [
-        {"role": "system", "content": system_prompt + "\n\nThe user wants a more detailed explanation of the previous response. Elaborate with examples, analogies, and deeper details."},
+        {"role": "system", "content": system_prompt + "\n\nکاربر می‌خواد توضیح دقیق‌تری از جواب قبلی داشته باشه. با مثال، تشبیه، و جزئیات بیشتر توضیح بده."},
         {"role": "user", "content": last_user},
         {"role": "assistant", "content": last_assistant},
-        {"role": "user", "content": "Explain this in more detail with examples and deeper analysis."}
+        {"role": "user", "content": "این رو با جزئیات بیشتر و مثال توضیح بده."}
     ]
     
     full_response = ""
@@ -502,13 +563,13 @@ async def cb_chat_explain(callback: CallbackQuery, ai_client, history_manager, b
         full_response = partial
     
     if not full_response:
-        full_response = "I couldn't generate a detailed explanation."
+        full_response = "نتونستم توضیح دقیق بدم."
     
-    await history_manager.add_message(callback.message.chat.id, "user", "Explain more detail")
+    await history_manager.add_message(callback.message.chat.id, "user", "توضیح بیشتر")
     await history_manager.add_message(callback.message.chat.id, "assistant", full_response)
     
     await callback.message.edit_text(full_response, parse_mode="Markdown", reply_markup=get_chat_followup_keyboard())
-    await callback.answer("Explained!")
+    await callback.answer("توضیح داده شد!")
 
 
 @router.callback_query(lambda c: c.data == "chat:translate")
@@ -516,7 +577,7 @@ async def cb_chat_translate(callback: CallbackQuery, ai_client, history_manager,
     """Translate the last response."""
     history = await history_manager.get_history(callback.message.chat.id)
     if not history:
-        await callback.answer("Nothing to translate.", show_alert=True)
+        await callback.answer("چیزی برای ترجمه وجود نداره.", show_alert=True)
         return
     
     # Get last assistant message
@@ -527,10 +588,10 @@ async def cb_chat_translate(callback: CallbackQuery, ai_client, history_manager,
             break
     
     if not last_assistant:
-        await callback.answer("Nothing to translate.", show_alert=True)
+        await callback.answer("چیزی برای ترجمه وجود نداره.", show_alert=True)
         return
     
-    await callback.message.edit_text("🌐 <b>Translating...</b>", parse_mode="HTML")
+    await callback.message.edit_text("🌐 <b>در حال ترجمه...</b>", parse_mode="HTML")
     
     messages = [
         {"role": "system", "content": system_prompt + "\n\nTranslate the following text to the user's language (detect from context). Keep formatting."},
@@ -542,13 +603,13 @@ async def cb_chat_translate(callback: CallbackQuery, ai_client, history_manager,
         full_response = partial
     
     if not full_response:
-        full_response = "Translation failed."
+        full_response = "ترجمه شکست خورد."
     
     await history_manager.add_message(callback.message.chat.id, "user", "Translate last response")
     await history_manager.add_message(callback.message.chat.id, "assistant", full_response)
     
     await callback.message.edit_text(full_response, parse_mode="Markdown", reply_markup=get_chat_followup_keyboard())
-    await callback.answer("Translated!")
+    await callback.answer("ترجمه شد!")
 
 
 @router.callback_query(lambda c: c.data == "chat:clear")
@@ -557,7 +618,7 @@ async def cb_chat_clear(callback: CallbackQuery, history_manager, bot_username: 
     try:
         await history_manager.clear(callback.message.chat.id)
         await callback.message.edit_text(
-            "🧹 <b>Done!</b> Conversation history wiped clean. Fresh start!",
+            "🧹 <b>تموم شد!</b> حافظه چت کاملاً پاک شد. شروع تازه! 🌱",
             parse_mode="HTML",
             reply_markup=get_main_menu_keyboard()
         )
@@ -565,4 +626,4 @@ async def cb_chat_clear(callback: CallbackQuery, history_manager, bot_username: 
         logger.error("Error in cb_chat_clear: %s", e, exc_info=True)
         await callback.answer("❌ خطا در پاک کردن حافظه", show_alert=True)
     else:
-        await callback.answer("History cleared!")
+        await callback.answer("حافظه پاک شد!")

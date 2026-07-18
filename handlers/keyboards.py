@@ -26,88 +26,104 @@ def get_model_display_name(model_id: str) -> str:
 
 
 def get_main_menu_keyboard() -> InlineKeyboardMarkup:
-    """Main menu inline keyboard for /start."""
+    """Main menu inline keyboard for /start - Premium & Organized."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="💬  شروع چت جدید", callback_data="menu:chat"),
+            InlineKeyboardButton(text="🖼️  تحلیل عکس", callback_data="menu:image"),
+        ],
+        [
+            InlineKeyboardButton(text="🤖  تغییر مدل AI", callback_data="menu:model"),
+            InlineKeyboardButton(text="🗑️  پاک کردن حافظه", callback_data="chat:clear"),
+        ],
+        [
+            InlineKeyboardButton(text="👑  اطلاعات صاحب (Jadix)", callback_data="menu:owner"),
+            InlineKeyboardButton(text="❓  راهنما / Help", callback_data="menu:help"),
+        ],
+    ])
+
+
+def get_compact_main_menu_keyboard() -> InlineKeyboardMarkup:
+    """Compact main menu for callback returns - 2x3 grid."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="💬 چت جدید", callback_data="menu:chat"),
-            InlineKeyboardButton(text="🔍 جستجوی وب", callback_data="menu:search"),
+            InlineKeyboardButton(text="🤖 مدل AI", callback_data="menu:model"),
+            InlineKeyboardButton(text="🗑️ پاک کردن", callback_data="chat:clear"),
         ],
         [
-            InlineKeyboardButton(text="🖼️ تحلیل عکس", callback_data="menu:image"),
-            InlineKeyboardButton(text="🤖 تغییر مدل", callback_data="menu:model"),
-        ],
-        [
-            InlineKeyboardButton(text="👑 اطلاعات سازنده", callback_data="menu:owner"),
-            InlineKeyboardButton(text="👤 پروفایل من", callback_data="menu:profile"),
-        ],
-        [
+            InlineKeyboardButton(text="🖼️ عکس", callback_data="menu:image"),
+            InlineKeyboardButton(text="👑 صاحب", callback_data="menu:owner"),
             InlineKeyboardButton(text="❓ راهنما", callback_data="menu:help"),
-        ]
+        ],
     ])
 
 
 def get_chat_followup_keyboard() -> InlineKeyboardMarkup:
-    """Follow-up actions after AI response."""
+    """Follow-up actions after AI response - Clean 2x2 + 1 layout."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🔄 تولید مجدد", callback_data="chat:regenerate"),
-            InlineKeyboardButton(text="🔍 جستجوی وب", callback_data="chat:search"),
+            InlineKeyboardButton(text="🔄  تولید مجدد", callback_data="chat:regenerate"),
+            InlineKeyboardButton(text="💡  توضیح بیشتر", callback_data="chat:explain"),
         ],
         [
-            InlineKeyboardButton(text="💡 توضیح بیشتر", callback_data="chat:explain"),
-            InlineKeyboardButton(text="🌐 ترجمه", callback_data="chat:translate"),
+            InlineKeyboardButton(text="🌐  ترجمه", callback_data="chat:translate"),
+            InlineKeyboardButton(text="🔍  جستجوی وب", callback_data="chat:search"),
         ],
         [
-            InlineKeyboardButton(text="🗑️ پاک کردن حافظه", callback_data="chat:clear"),
+            InlineKeyboardButton(text="🗑️  پاک کردن حافظه", callback_data="chat:clear"),
         ],
         [
-            InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main"),
-        ]
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
     ])
 
 
 def get_image_followup_keyboard() -> InlineKeyboardMarkup:
-    """Follow-up actions after image analysis."""
+    """Follow-up actions after image analysis - Clean layout."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📝 استخراج متن (OCR)", callback_data="image:ocr"),
-            InlineKeyboardButton(text="🔍 تحلیل عمیق‌تر", callback_data="image:deeper"),
+            InlineKeyboardButton(text="📝  استخراج متن (OCR)", callback_data="image:ocr"),
+            InlineKeyboardButton(text="🔍  تحلیل عمیق‌تر", callback_data="image:deeper"),
         ],
         [
-            InlineKeyboardButton(text="🌐 ترجمه متن", callback_data="image:translate"),
-            InlineKeyboardButton(text="💾 ذخیره نتیجه", callback_data="image:save"),
+            InlineKeyboardButton(text="🌐  ترجمه متن", callback_data="image:translate"),
+            InlineKeyboardButton(text="💾  ذخیره نتیجه", callback_data="image:save"),
         ],
         [
-            InlineKeyboardButton(text="🗑️ پاک کردن حافظه", callback_data="chat:clear"),
+            InlineKeyboardButton(text="🗑️  پاک کردن حافظه", callback_data="chat:clear"),
         ],
         [
-            InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main"),
-        ]
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
     ])
 
 
 def get_settings_keyboard() -> InlineKeyboardMarkup:
-    """Settings menu keyboard."""
+    """Settings menu keyboard - Clean 2x2 layout."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🤖 تغییر مدل", callback_data="settings:model"),
-            InlineKeyboardButton(text="🎨 فرمت‌دهی", callback_data="settings:markdown"),
+            InlineKeyboardButton(text="🤖  تغییر مدل AI", callback_data="settings:model"),
+            InlineKeyboardButton(text="🎨  فرمت‌دهی مارک‌داون", callback_data="settings:markdown"),
         ],
         [
-            InlineKeyboardButton(text="📝 طول حافظه", callback_data="settings:history"),
-            InlineKeyboardButton(text="🔙 منوی اصلی", callback_data="menu:main"),
-        ]
+            InlineKeyboardButton(text="📝  طول حافظه", callback_data="settings:history"),
+            InlineKeyboardButton(text="🗑️  پاک کردن حافظه", callback_data="chat:clear"),
+        ],
+        [
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
     ])
 
 
 def get_model_selection_keyboard(current_model: str = "") -> InlineKeyboardMarkup:
-    """Model selection keyboard."""
+    """Model selection keyboard - 2 per row with checkmark for current."""
     buttons = []
     row = []
     for model_id, model_name in AVAILABLE_MODELS:
         marker = " ✅" if model_id == current_model else ""
         row.append(InlineKeyboardButton(
-            text=f"{model_name}{marker}", 
+            text=f"{model_name}{marker}",
             callback_data=f"model:{model_id}"
         ))
         if len(row) == 2:
@@ -115,19 +131,19 @@ def get_model_selection_keyboard(current_model: str = "") -> InlineKeyboardMarku
             row = []
     if row:
         buttons.append(row)
-    
-    buttons.append([InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main")])
+
+    buttons.append([InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def get_model_keyboard(current_model: str = "") -> InlineKeyboardMarkup:
-    """Compact model keyboard for /model command."""
+    """Compact model keyboard for /model command - 2 per row."""
     buttons = []
     row = []
     for model_id, model_name in AVAILABLE_MODELS:
         marker = " ✅" if model_id == current_model else ""
         row.append(InlineKeyboardButton(
-            text=f"{model_name}{marker}", 
+            text=f"{model_name}{marker}",
             callback_data=f"model:{model_id}"
         ))
         if len(row) == 2:
@@ -135,23 +151,80 @@ def get_model_keyboard(current_model: str = "") -> InlineKeyboardMarkup:
             row = []
     if row:
         buttons.append(row)
-    
-    buttons.append([InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main")])
+
+    buttons.append([InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def get_help_keyboard() -> InlineKeyboardMarkup:
-    """Help menu keyboard."""
+    """Help menu keyboard - Clean 2x2 + 1 layout."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="💬 نکات چت", callback_data="help:chat"),
-            InlineKeyboardButton(text="🖼️ نکات عکس", callback_data="help:image"),
+            InlineKeyboardButton(text="💬  نکات چت", callback_data="help:chat"),
+            InlineKeyboardButton(text="🖼️  نکات عکس", callback_data="help:image"),
         ],
         [
-            InlineKeyboardButton(text="🔍 نکات جستجو", callback_data="help:search"),
-            InlineKeyboardButton(text="⚙️ دستورات", callback_data="help:commands"),
+            InlineKeyboardButton(text="🔍  نکات جستجو", callback_data="help:search"),
+            InlineKeyboardButton(text="⚙️  دستورات", callback_data="help:commands"),
         ],
         [
-            InlineKeyboardButton(text="🔙 بازگشت به منو", callback_data="menu:main"),
-        ]
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_owner_keyboard() -> InlineKeyboardMarkup:
+    """Owner info keyboard with back to main."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main")],
+    ])
+
+
+def get_profile_keyboard() -> InlineKeyboardMarkup:
+    """Profile keyboard with back to main."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main")],
+    ])
+
+
+def get_model_changed_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard shown after model change."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+            InlineKeyboardButton(text="🤖  انتخاب مدل دیگر", callback_data="settings:model"),
+        ],
+    ])
+
+
+def get_clear_confirmation_keyboard() -> InlineKeyboardMarkup:
+    """Confirmation keyboard for clearing history."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅  بله، پاک کن", callback_data="chat:clear_confirm"),
+            InlineKeyboardButton(text="❌  انصراف", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_search_keyboard() -> InlineKeyboardMarkup:
+    """Search follow-up keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🔍  جستجوی عمیق‌تر", callback_data="search:deeper"),
+            InlineKeyboardButton(text="🌐  ترجمه نتایج", callback_data="search:translate"),
+        ],
+        [
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_image_help_keyboard() -> InlineKeyboardMarkup:
+    """Image analysis help keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📸  امتحان کن", callback_data="menu:image"),
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
     ])
