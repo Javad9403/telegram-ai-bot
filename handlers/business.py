@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.enums import ChatType
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # ========== BUSINESS CONNECTION HANDLERS ==========
 
 @router.business_connection()
-async def handle_business_connection(business_connection: BusinessConnection):
+async def handle_business_connection(business_connection: BusinessConnection, bot: Bot = None):
     """Handle when a user connects/disconnects the bot as chat automation."""
     user_id = business_connection.user.id
     is_connected = business_connection.is_enabled
@@ -45,9 +45,8 @@ async def handle_business_connection(business_connection: BusinessConnection):
         
         # Send confirmation message to the user
         try:
-            bot = business_connection.bot
-            if not bot:
-                # Try to get bot from dispatcher context
+            # Use bot from dispatcher context (injected by aiogram)
+            if bot is None:
                 from aiogram import Bot
                 bot = Bot.get_current()
             if bot:
