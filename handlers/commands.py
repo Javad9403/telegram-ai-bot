@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
@@ -10,7 +11,10 @@ from handlers.keyboards import (
     get_main_menu_keyboard, get_settings_keyboard, get_help_keyboard,
     get_model_selection_keyboard, get_chat_followup_keyboard, get_model_keyboard,
     get_owner_keyboard, get_profile_keyboard, get_model_changed_keyboard,
-    get_model_display_name
+    get_model_display_name,
+    get_secretary_keyboard, get_secretary_task_keyboard,
+    get_secretary_remind_keyboard, get_secretary_note_keyboard,
+    get_secretary_calendar_keyboard,
 )
 
 router = Router()
@@ -393,6 +397,55 @@ async def cb_image(callback: CallbackQuery):
     await callback.answer()
 
 
+@router.callback_query(lambda c: c.data == "menu:secretary")
+async def cb_secretary(callback: CallbackQuery):
+    """Show secretary mode menu."""
+    await callback.message.edit_text(
+        "🤖 <b>حالت سکرتر هوشمند</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "من هم می‌تونم چت کنم و هم سکرتر شخصی‌ات باشم!\n\n"
+        "📋 <b>دستورات:</b>\n"
+        "• <code>/remind</code> — یادآوری\n"
+        "• <code>/task</code> — تسک‌ها\n"
+        "• <code>/note</code> — یادداشت\n"
+        "• <code>/calendar</code> — تقویم\n"
+        "• <code>/summary</code> — گزارش\n\n"
+        "💬 <b>یا به زبان طبیعی بگو...</b>\n"
+        "• \"یادآوری کن فردا ساعت ۹ جلسه دارم\"\n"
+        "• \"تسک جدید: خرید شیر\"\n"
+        "• \"یادداشت: تلفن علی ۰۹۱۲...\"\n"
+        "• \"تقویم: جلسه با تیم هفته بعد ساعت ۱۰\"\n"
+        "• \"خلاصه امروز رو بده\"\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "دیتا فقط برای تو (مالک) ذخیره میشه 🔒",
+        parse_mode="HTML",
+        reply_markup=get_secretary_keyboard()
+    )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "menu:tasks")
+async def cb_tasks(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show tasks list from main menu."""
+    tasks = await secretary.get_tasks(callback.message.chat.id)
+    if not tasks:
+        text = "📭 هیچ تسکی ثبت نشده.\nبا <code>/task add</code> یکی اضافه کن."
+    else:
+        lines = ["📋 <b>لیست تسک‌ها:</b>\n"]
+        for t in tasks[:20]:
+            p_icon = "🔴" if t.priority >= 3 else "🟡" if t.priority == 2 else "🟢"
+            status_icon = "✅" if t.status == "done" else "⏳" if t.status == "in_progress" else "🔵"
+            due = f" 📅 {t.due_date[:16]}" if t.due_date else ""
+            lines.append(f"{status_icon} {p_icon} <code>{t.id[:8]}</code> {t.title}{due}")
+
+        if len(tasks) > 20:
+            lines.append(f"\n... و {len(tasks) - 20} تسک دیگر")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_task_keyboard())
+    await callback.answer()
+
+
 @router.callback_query(lambda c: c.data == "menu:search")
 async def cb_search(callback: CallbackQuery):
     await callback.message.edit_text(
@@ -627,3 +680,238 @@ async def cb_chat_clear(callback: CallbackQuery, history_manager, bot_username: 
         await callback.answer("❌ خطا در پاک کردن حافظه", show_alert=True)
     else:
         await callback.answer("حافظه پاک شد!")
+
+
+# Additional Secretary callbacks
+@router.callback_query(lambda c: c.data == "sec:tasks")
+async def cb_sec_tasks(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show tasks list from secretary menu."""
+    tasks = await secretary.get_tasks(callback.message.chat.id)
+    if not tasks:
+        text = "📭 هیچ تسکی ثبت نشده.\nبا <code>/task add</code> یکی اضافه کن."
+    else:
+        lines = ["📋 <b>لیست تسک‌ها:</b>\n"]
+        for t in tasks[:20]:
+            p_icon = "🔴" if t.priority >= 3 else "🟡" if t.priority == 2 else "🟢"
+            status_icon = "✅" if t.status == "done" else "⏳" if t.status == "in_progress" else "🔵"
+            due = f" 📅 {t.due_date[:16]}" if t.due_date else ""
+            lines.append(f"{status_icon} {p_icon} <code>{t.id[:8]}</code> {t.title}{due}")
+
+        if len(tasks) > 20:
+            lines.append(f"\n... و {len(tasks) - 20} تسک دیگر")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_task_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:tasks_pending")
+async def cb_sec_tasks_pending(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show pending tasks."""
+    tasks = await secretary.get_tasks(callback.message.chat.id, status="pending")
+    if not tasks:
+        text = "📭 هیچ تسک در الانتظاری نیست."
+    else:
+        lines = ["⏳ <b>تسک‌های در انتظار:</b>\n"]
+        for t in tasks[:20]:
+            p_icon = "🔴" if t.priority >= 3 else "🟡" if t.priority == 2 else "🟢"
+            due = f" 📅 {t.due_date[:16]}" if t.due_date else ""
+            lines.append(f"{p_icon} <code>{t.id[:8]}</code> {t.title}{due}")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_task_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:tasks_done")
+async def cb_sec_tasks_done(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show completed tasks."""
+    tasks = await secretary.get_tasks(callback.message.chat.id, status="done")
+    if not tasks:
+        text = "📭 هیچ تسک تکمیل شده‌ای نیست."
+    else:
+        lines = ["✅ <b>تسک‌های انجام شده:</b>\n"]
+        for t in tasks[:20]:
+            due = f" 📅 {t.due_date[:16]}" if t.due_date else ""
+            lines.append(f"✅ <code>{t.id[:8]}</code> {t.title}{due}")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_task_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:remind")
+async def cb_sec_remind(callback: CallbackQuery):
+    """Show reminder help."""
+    text = (
+        "⏰ <b>تنظیم یادآوری</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "از دستور زیر استفاده کن:\n"
+        "<code>/remind [زمان] [متن]</code>\n\n"
+        "<b>مثال‌ها:</b>\n"
+        "• <code>/remind 14:30 جلسه تیم</code>\n"
+        "• <code>/remind فردا ۰۹:۰۰ خرید شیر</code>\n"
+        "• <code>/remind ۲۰۲۴-۱۲-۲۵ ۱۰:۰۰ کریسمس</code>\n\n"
+        "یا به زبان طبیعی بنویس:\n"
+        "• \"یادآوری کن فردا ساعت ۹ جلسه دارم\"\n"
+        "• \"یادم بگو امروز ساعت ۵ عصر خرید کنم\"\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_remind_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:reminders")
+async def cb_sec_reminders(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show active reminders."""
+    reminders = await secretary.get_reminders(callback.message.chat.id, active_only=True)
+    if not reminders:
+        text = "📭 هیچ یادآوری فعالی نیست.\nبا <code>/remind</code> یکی بساز."
+    else:
+        lines = ["⏰ <b>یادآوری‌های فعال:</b>\n"]
+        for r in reminders[:20]:
+            lines.append(f"⏰ {r.remind_at[11:16]} — {r.title} (<code>{r.id[:8]}</code>)")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_remind_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:note")
+async def cb_sec_note(callback: CallbackQuery):
+    """Show note help."""
+    text = (
+        "📝 <b>یادداشت سریع</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "از دستور زیر استفاده کن:\n"
+        "<code>/note متن یادداشت</code>\n\n"
+        "یا به زبان طبیعی بنویس:\n"
+        "• \"یادداشت: تلفن علی ۰۹۱۲...\"\n"
+        "• \"نوت: آدرس سایت مهم\"\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_note_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:notes")
+async def cb_sec_notes(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show all notes."""
+    notes = await secretary.get_notes(callback.message.chat.id)
+    if not notes:
+        text = "📭 هیچ یادداشتی نیست.\nبا <code>/note</code> یکی بساز."
+    else:
+        lines = ["📝 <b>یادداشت‌ها:</b>\n"]
+        for n in notes[:15]:
+            lines.append(f"📄 <code>{n.id[:8]}</code> {n.title}")
+            if n.content != n.title:
+                lines.append(f"   {n.content[:80]}{'...' if len(n.content) > 80 else ''}")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_note_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:event")
+async def cb_sec_event(callback: CallbackQuery):
+    """Show event help."""
+    text = (
+        "📅 <b>افزودن رویداد تقویم</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "از دستور زیر استفاده کن:\n"
+        "<code>/event [زمان] [عنوان]</code>\n\n"
+        "<b>مثال‌ها:</b>\n"
+        "• <code>/event 14:30 جلسه تیم</code>\n"
+        "• <code>/event فردا ۱۰:۰۰ ملاقات دکتر</code>\n\n"
+        "یا به زبان طبیعی:\n"
+        "• \"تقویم: جلسه با تیم هفته بعد ساعت ۱۰\"\n"
+        "• \"رویداد جدید: خرید عید فردا صبح\"\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_calendar_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:calendar")
+async def cb_sec_calendar(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show today's calendar."""
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+    events = await secretary.get_events(
+        callback.message.chat.id,
+        start_from=f"{today}T00:00:00",
+        end_before=f"{today}T23:59:59"
+    )
+
+    if not events:
+        text = f"📅 <b>تقویم امروز ({today})</b>\n\n📭 هیچ رویدادی ثبت نشده."
+    else:
+        lines = [f"📅 <b>تقویم امروز ({today}):</b>\n"]
+        for e in events:
+            loc = f" 📍 {e.location}" if e.location else ""
+            lines.append(f"🕐 {e.start_time[11:16]} — {e.title}{loc}")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_calendar_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:calendar_week")
+async def cb_sec_calendar_week(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show this week's calendar."""
+    now = datetime.now()
+    start = now.strftime("%Y-%m-%d")
+    end = (now + timedelta(days=7)).strftime("%Y-%m-%d")
+    events = await secretary.get_events(
+        callback.message.chat.id,
+        start_from=f"{start}T00:00:00",
+        end_before=f"{end}T23:59:59"
+    )
+
+    if not events:
+        text = f"📅 <b>تقویم این هفته ({start} تا {end})</b>\n\n📭 هیچ رویدادی ثبت نشده."
+    else:
+        lines = [f"📅 <b>تقویم این هفته ({start} تا {end}):</b>\n"]
+        for e in events:
+            loc = f" 📍 {e.location}" if e.location else ""
+            lines.append(f"🕐 {e.start_time[:10]} {e.start_time[11:16]} — {e.title}{loc}")
+        text = "\n".join(lines)
+
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_calendar_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:summary")
+async def cb_sec_summary(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show daily summary."""
+    summary = await secretary.get_daily_summary(callback.message.chat.id)
+    await callback.message.edit_text(summary, parse_mode="HTML", reply_markup=get_secretary_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:weekly")
+async def cb_sec_weekly(callback: CallbackQuery, secretary: SecretaryManager):
+    """Show weekly summary."""
+    summary = await secretary.get_weekly_summary(callback.message.chat.id)
+    await callback.message.edit_text(summary, parse_mode="HTML", reply_markup=get_secretary_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "sec:task")
+async def cb_sec_task(callback: CallbackQuery):
+    """Show task help."""
+    text = (
+        "📋 <b>مدیریت تسک‌ها</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "دستورات:\n"
+        "• <code>/task add عنوان تسک</code> — تسک جدید\n"
+        "• <code>/tasks</code> — لیست همه\n"
+        "• <code>/task done آیدی</code> — تکمیل\n"
+        "• <code>/task del آیدی</code> — حذف\n\n"
+        "یا به زبان طبیعی:\n"
+        "• \"تسک جدید: خرید شیر\"\n"
+        "• \"کار جدید: تماس با علی فوری\"\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_secretary_task_keyboard())
+    await callback.answer()

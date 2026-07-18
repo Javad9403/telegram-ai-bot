@@ -37,6 +37,10 @@ def get_main_menu_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🗑️  پاک کردن حافظه", callback_data="chat:clear"),
         ],
         [
+            InlineKeyboardButton(text="🤖  سکرتر هوشمند", callback_data="menu:secretary"),
+            InlineKeyboardButton(text="📋  تسک‌ها و یادآوری", callback_data="menu:tasks"),
+        ],
+        [
             InlineKeyboardButton(text="👑  اطلاعات صاحب (Jadix)", callback_data="menu:owner"),
             InlineKeyboardButton(text="❓  راهنما / Help", callback_data="menu:help"),
         ],
@@ -225,6 +229,95 @@ def get_image_help_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📸  امتحان کن", callback_data="menu:image"),
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_secretary_keyboard() -> InlineKeyboardMarkup:
+    """Secretary mode main keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⏰  یادآوری جدید", callback_data="sec:remind"),
+            InlineKeyboardButton(text="📋  تسک جدید", callback_data="sec:task"),
+        ],
+        [
+            InlineKeyboardButton(text="📝  یادداشت", callback_data="sec:note"),
+            InlineKeyboardButton(text="📅  رویداد تقویم", callback_data="sec:event"),
+        ],
+        [
+            InlineKeyboardButton(text="📋  لیست تسک‌ها", callback_data="sec:tasks"),
+            InlineKeyboardButton(text="📅  تقویم امروز", callback_data="sec:calendar"),
+        ],
+        [
+            InlineKeyboardButton(text="📊  خلاصه روز", callback_data="sec:summary"),
+            InlineKeyboardButton(text="📈  خلاصه هفته", callback_data="sec:weekly"),
+        ],
+        [
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_secretary_task_keyboard() -> InlineKeyboardMarkup:
+    """Task management keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="➕  تسک جدید", callback_data="sec:task"),
+            InlineKeyboardButton(text="📋  همه تسک‌ها", callback_data="sec:tasks"),
+        ],
+        [
+            InlineKeyboardButton(text="⏳  در انتظار", callback_data="sec:tasks_pending"),
+            InlineKeyboardButton(text="✅  انجام شده", callback_data="sec:tasks_done"),
+        ],
+        [
+            InlineKeyboardButton(text="🔙  سکرتر", callback_data="menu:secretary"),
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_secretary_remind_keyboard() -> InlineKeyboardMarkup:
+    """Reminder management keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⏰  یادآوری جدید", callback_data="sec:remind"),
+            InlineKeyboardButton(text="📋  یادآوری‌های فعال", callback_data="sec:reminders"),
+        ],
+        [
+            InlineKeyboardButton(text="🔙  سکرتر", callback_data="menu:secretary"),
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_secretary_note_keyboard() -> InlineKeyboardMarkup:
+    """Note management keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📝  یادداشت جدید", callback_data="sec:note"),
+            InlineKeyboardButton(text="📋  همه یادداشت‌ها", callback_data="sec:notes"),
+        ],
+        [
+            InlineKeyboardButton(text="🔙  سکرتر", callback_data="menu:secretary"),
+            InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
+        ],
+    ])
+
+
+def get_secretary_calendar_keyboard() -> InlineKeyboardMarkup:
+    """Calendar management keyboard."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📅  رویداد جدید", callback_data="sec:event"),
+            InlineKeyboardButton(text="📅  امروز", callback_data="sec:calendar"),
+        ],
+        [
+            InlineKeyboardButton(text="📆  این هفته", callback_data="sec:calendar_week"),
+            InlineKeyboardButton(text="📋  همه رویدادها", callback_data="sec:events"),
+        ],
+        [
+            InlineKeyboardButton(text="🔙  سکرتر", callback_data="menu:secretary"),
             InlineKeyboardButton(text="🏠  منوی اصلی", callback_data="menu:main"),
         ],
     ])

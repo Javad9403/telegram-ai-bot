@@ -13,8 +13,10 @@ from handlers import commands as commands_handler
 from handlers import chat as chat_handler
 from handlers import web_search as web_search_handler
 from handlers import image as image_handler
+from handlers import secretary as secretary_handler
 from utils.ai_client import AIClient
 from utils.history import HistoryManager
+from utils.secretary import SecretaryManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,6 +40,15 @@ async def on_startup(bot: Bot, dispatcher: Dispatcher):
             BotCommand(command="search", description="Search the web"),
             BotCommand(command="owner", description="Show owner information"),
             BotCommand(command="me", description="Show your user info"),
+            BotCommand(command="remind", description="Set a reminder"),
+            BotCommand(command="task", description="Manage tasks"),
+            BotCommand(command="tasks", description="List all tasks"),
+            BotCommand(command="note", description="Quick note"),
+            BotCommand(command="notes", description="List all notes"),
+            BotCommand(command="event", description="Add calendar event"),
+            BotCommand(command="calendar", description="Show calendar"),
+            BotCommand(command="summary", description="Daily/weekly summary"),
+            BotCommand(command="secretary", description="Secretary mode help"),
         ],
         scope=BotCommandScopeDefault(),
     )
@@ -48,6 +59,9 @@ async def on_shutdown(bot: Bot, dispatcher: Dispatcher):
     history_manager: HistoryManager = dispatcher.get("history_manager")
     if history_manager:
         await history_manager.close()
+    secretary: SecretaryManager = dispatcher.get("secretary")
+    if secretary and secretary.redis:
+        await secretary.redis.close()
     logger.info("Bot shut down")
 
 
@@ -63,9 +77,11 @@ def create_dispatcher() -> Dispatcher:
         vision_model=config.vision_model,
     )
     history_manager = HistoryManager(redis_url=config.redis_url, ai_client=ai_client)
+    secretary = SecretaryManager(redis_url=config.redis_url)
 
     dp["ai_client"] = ai_client
     dp["history_manager"] = history_manager
+    dp["secretary"] = secretary
     dp["system_prompt"] = config.system_prompt
     dp["owner_id"] = config.owner_id
     dp["owner_name"] = config.owner_name
@@ -75,6 +91,7 @@ def create_dispatcher() -> Dispatcher:
     dp.include_router(web_search_handler.router)
     dp.include_router(chat_handler.router)
     dp.include_router(image_handler.router)
+    dp.include_router(secretary_handler.router)
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
